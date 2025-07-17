@@ -11,8 +11,53 @@
 </head>
 <body>
   <h1>Samuwa EducaNews</h1>
-  <div id="posts-container"></div>
-  <script src="firebase.js"></script>
-  <script src="script.js"></script>
+  <div id="contentArea"></div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyAwAxP-MWwNnKP59PA6joil4Ceq10eozlc",
+    authDomain: "wafula-s-educational-posts.firebaseapp.com",
+    projectId: "wafula-s-educational-posts"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  const contentArea = document.getElementById("contentArea");
+
+  db.collection("posts").orderBy("timestamp", "desc").get().then((querySnapshot) => {
+    querySnapshot.forEach((doc) => {
+      const post = doc.data();
+      const div = document.createElement("div");
+      div.style.border = "1px solid #ccc";
+      div.style.padding = "10px";
+      div.style.marginBottom = "15px";
+
+      let html = `<h3>${post.title}</h3><p><strong>Category:</strong> ${post.category}</p>`;
+
+      if (post.article) {
+        html += `<p>${post.article}</p>`;
+      }
+
+      if (post.url) {
+        const ext = post.url.split('.').pop().split('?')[0].toLowerCase();
+        if (ext === "pdf") {
+          html += `<iframe src="${post.url}" width="100%" height="400px"></iframe>`;
+        } else if (["jpg", "png", "jpeg", "gif"].includes(ext)) {
+          html += `<img src="${post.url}" style="max-width:100%;">`;
+        } else if (["mp4", "webm"].includes(ext)) {
+          html += `<video controls width="100%"><source src="${post.url}" type="video/${ext}"></video>`;
+        } else {
+          html += `<a href="${post.url}" target="_blank">Download File</a>`;
+        }
+      }
+
+      div.innerHTML = html;
+      contentArea.appendChild(div);
+    });
+  });
+</script>
 </body>
 </html>
