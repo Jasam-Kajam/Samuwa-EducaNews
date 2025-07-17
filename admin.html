@@ -1,36 +1,48 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin Upload</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <title>Admin Panel</title>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
+  <script src="firebase.js"></script>
 </head>
 <body>
-  <h1>Upload New Post</h1>
-  <input id="title" placeholder="Title"><br><br>
-  <input id="category" placeholder="Category"><br><br>
-  <textarea id="content" placeholder="Post content..."></textarea><br><br>
-  <button onclick="uploadPost()">Upload</button>
-  <script src="firebase.js"></script>
-  <script>
-    function uploadPost() {
-      const title = document.getElementById('title').value;
-      const category = document.getElementById('category').value;
-      const content = document.getElementById('content').value;
+  <h2>Upload Educational Content</h2>
+  <input type="text" id="title" placeholder="Enter title" /><br>
+  <input type="text" id="category" placeholder="Enter category (e.g. blog, news, education)" /><br>
+  <input type="file" id="fileInput" /><br>
+  <button id="uploadBtn">Upload</button>
 
-      db.collection('posts').add({
-        title,
-        category,
-        content,
-        timestamp: new Date()
-      }).then(() => {
-        alert("Post uploaded!");
-        location.reload();
-      }).catch((err) => alert("Error: " + err));
-    }
+  <script>
+    document.getElementById("uploadBtn").addEventListener("click", async () => {
+      const title = document.getElementById("title").value;
+      const category = document.getElementById("category").value;
+      const file = document.getElementById("fileInput").files[0];
+
+      if (!title || !category || !file) {
+        alert("Please fill all fields and select a file.");
+        return;
+      }
+
+      const storageRef = firebase.storage().ref("uploads/" + file.name);
+      try {
+        const snapshot = await storageRef.put(file);
+        const downloadURL = await snapshot.ref.getDownloadURL();
+
+        await firebase.firestore().collection("posts").add({
+          title,
+          category,
+          url: downloadURL,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        alert("File uploaded successfully!");
+      } catch (error) {
+        alert("Upload failed: " + error.message);
+      }
+    });
   </script>
 </body>
-</html> 
+</html>
