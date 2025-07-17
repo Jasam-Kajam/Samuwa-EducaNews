@@ -1,13 +1,11 @@
 // Paste your Firebase config below and uncomment this section
 /*
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyAwAxP-MWwNnKP59PA6joil4Ceq10eozlc",
+  authDomain: "wafula-s-educational-posts.firebaseapp.com",
+  databaseURL: "https://wafula-s-educational-posts-default-rtdb.firebaseio.com",
+  projectId: "wafula-s-educational-posts",
+  storageBucket: "wafula-s-educational-posts.firebasestorage.app",
+  messagingSenderId: "1040710248503",
+  appId: "1:1040710248503:web:87fbd02de2b919511577b2"
 };
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-*/
