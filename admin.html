@@ -65,32 +65,43 @@
 
     // Upload function
     document.getElementById('uploadBtn').addEventListener('click', async () => {
-      const title = document.getElementById('titleInput').value;
-      const category = document.getElementById('categoryInput').value;
-      const file = document.getElementById('fileInput').files[0];
+  const title = document.getElementById('titleInput').value;
+  const category = document.getElementById('categoryInput').value;
+  const file = document.getElementById('fileInput').files[0];
+  const uploadBtn = document.getElementById('uploadBtn');
 
-      if (!title || !category || !file) {
-        alert("Please fill all fields.");
-        return;
-      }
+  if (!title || !category || !file) {
+    alert("Please fill all fields.");
+    return;
+  }
 
-      try {
-        const ref = firebase.storage().ref(`uploads/${file.name}`);
-        const uploadTask = await ref.put(file);
-        const downloadURL = await uploadTask.ref.getDownloadURL();
+  uploadBtn.textContent = "Uploading...";
+  uploadBtn.disabled = true;
 
-        await firebase.firestore().collection('posts').add({
-          title,
-          category,
-          fileURL: downloadURL,
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
+  try {
+    const ref = firebase.storage().ref(`uploads/${file.name}`);
+    const uploadTask = await ref.put(file);
+    const downloadURL = await uploadTask.ref.getDownloadURL();
 
-        alert("✅ Uploaded successfully!");
-      } catch (e) {
-        alert("Upload failed: " + e.message);
-      }
+    await firebase.firestore().collection('posts').add({
+      title,
+      category,
+      fileURL: downloadURL,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
+
+    alert("✅ Uploaded successfully!");
+    // Clear inputs
+    document.getElementById('titleInput').value = "";
+    document.getElementById('categoryInput').value = "";
+    document.getElementById('fileInput').value = "";
+  } catch (e) {
+    alert("❌ Upload failed: " + e.message);
+  } finally {
+    uploadBtn.textContent = "Upload";
+    uploadBtn.disabled = false;
+  }
+});
   </script>
 </body>
 </html>
