@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Upload</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+</head>
+<body>
+  <h1>Upload New Post</h1>
+  <input id="title" placeholder="Title"><br><br>
+  <input id="category" placeholder="Category"><br><br>
+  <textarea id="content" placeholder="Post content..."></textarea><br><br>
+  <button onclick="uploadPost()">Upload</button>
+  <script src="firebase.js"></script>
+  <script>
+    function uploadPost() {
+      const title = document.getElementById('title').value;
+      const category = document.getElementById('category').value;
+      const content = document.getElementById('content').value;
+
+      db.collection('posts').add({
+        title,
+        category,
+        content,
+        timestamp: new Date()
+      }).then(() => {
+        alert("Post uploaded!");
+        location.reload();
+      }).catch((err) => alert("Error: " + err));
+    }
+  </script>
+</body>
+</html>
