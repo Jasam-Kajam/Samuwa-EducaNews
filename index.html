@@ -7,10 +7,41 @@
   <link rel="stylesheet" href="style.css" />
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f9f9f9;
+    }
+
+    h1 {
+      color: #2c3e50;
+    }
+
+    #admin-link {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 10px 20px;
+      background: #3498db;
+      color: white;
+      text-decoration: none;
+      border-radius: 5px;
+    }
+
+    #admin-link:hover {
+      background: #2980b9;
+    }
+  </style>
 </head>
 <body>
   <h1>Samuwa EducaNews</h1>
-  <div id="posts-container"></div>
+
+  <div id="posts-container">
+    <!-- Blog and education posts will load here -->
+  </div>
+
+  <a id="admin-link" href="admin.html">Go to Admin Panel</a>
+
   <script src="firebase.js"></script>
   <script src="script.js"></script>
 </body>
