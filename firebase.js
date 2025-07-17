@@ -1,4 +1,3 @@
-// firebase.js
 const firebaseConfig = {
   apiKey: "AIzaSyAwAxP-MWwNnKP59PA6joil4Ceq10eozlc",
   authDomain: "wafula-s-educational-posts.firebaseapp.com",
@@ -9,5 +8,3 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-const storage = firebase.storage();
