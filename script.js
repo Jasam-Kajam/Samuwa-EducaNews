@@ -1,17 +1,11 @@
-const db = firebase.firestore();
-const container = document.getElementById("posts-container");
-
-db.collection("posts").orderBy("timestamp", "desc").onSnapshot(snapshot => {
-  container.innerHTML = "";
+// script.js
+db.collection("posts").get().then(snapshot => {
+  const container = document.getElementById("posts-container");
   snapshot.forEach(doc => {
-    const data = doc.data();
+    const post = doc.data();
     const div = document.createElement("div");
     div.className = "post";
-    div.innerHTML = `
-      <h3>${data.title}</h3>
-      <p>Category: ${data.category}</p>
-      <a href="${data.url}" target="_blank">View File</a>
-    `;
+    div.innerHTML = `<h2>${post.title}</h2><p>${post.content}</p>`;
     container.appendChild(div);
   });
 });
