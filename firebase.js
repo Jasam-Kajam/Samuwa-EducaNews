@@ -1,5 +1,3 @@
-// Paste your Firebase config below and uncomment this section
-/*
 const firebaseConfig = {
   apiKey: "AIzaSyAwAxP-MWwNnKP59PA6joil4Ceq10eozlc",
   authDomain: "wafula-s-educational-posts.firebaseapp.com",
