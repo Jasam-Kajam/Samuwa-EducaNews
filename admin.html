@@ -2,28 +2,57 @@
 <html>
 <head>
   <title>Admin Panel</title>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+  <style>
+    body { font-family: Arial; padding: 20px; max-width: 800px; margin: auto; }
+    .hidden { display: none; }
+    .card { border: 1px solid #ccc; padding: 10px; margin: 10px 0; border-radius: 8px; }
+    iframe, img, video { max-width: 100%; margin-top: 10px; }
+    textarea { width: 100%; height: 100px; }
+  </style>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 </head>
 <body>
-  <h2>Admin Login</h2>
+  <h1>Admin Panel</h1>
+
+  <!-- LOGIN SECTION -->
   <div id="login-section">
-    <input type="email" id="adminEmail" placeholder="Email"><br>
-    <input type="password" id="adminPassword" placeholder="Password"><br>
+    <input type="email" id="adminEmail" placeholder="Admin Email"><br><br>
+    <input type="password" id="adminPassword" placeholder="Password"><br><br>
     <button id="loginBtn">Login</button>
     <p id="loginStatus"></p>
   </div>
 
-  <div id="upload-section" style="display:none;">
-    <h2>Upload Content</h2>
-    <input type="text" id="title" placeholder="Title"><br>
-    <input type="text" id="category" placeholder="Category"><br>
-    <textarea id="article" placeholder="Optional article text..." rows="4" cols="40"></textarea><br>
-    <input type="file" id="fileInput"><br>
+  <!-- UPLOAD SECTION -->
+  <div id="upload-section" class="hidden">
+    <h2>Upload New Post</h2>
+    <input type="text" id="title" placeholder="Title"><br><br>
+    <select id="category">
+      <option value="">Select Category</option>
+      <option value="PDF">PDF</option>
+      <option value="Video">Video</option>
+      <option value="Image">Image</option>
+      <option value="Article">Article</option>
+    </select><br><br>
+    <input type="file" id="file"><br><br>
+    <textarea id="articleText" placeholder="Write article content here (for articles only)"></textarea><br><br>
     <button id="uploadBtn">Upload</button>
     <p id="uploadStatus"></p>
+
+    <hr>
+    <h2>Uploaded Posts</h2>
+    <label for="categoryFilter">Filter by Category:</label>
+    <select id="categoryFilter">
+      <option value="all">All</option>
+      <option value="PDF">PDF</option>
+      <option value="Video">Video</option>
+      <option value="Image">Image</option>
+      <option value="Article">Article</option>
+    </select>
+    <input type="text" id="searchTitle" placeholder="Search by title..." style="margin-left: 10px;">
+    <div id="contentArea"></div>
   </div>
 
   <script>
@@ -33,97 +62,126 @@
       authDomain: "wafula-s-educational-posts.firebaseapp.com",
       projectId: "wafula-s-educational-posts",
       storageBucket: "wafula-s-educational-posts.appspot.com",
-      messagingSenderId: "1040710248503",
-      appId: "1:1040710248503:web:87fbd02de2b919511577b2"
+      messagingSenderId: "your-id",
+      appId: "your-id"
     };
+
     firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const storage = firebase.storage();
 
-    document.addEventListener("DOMContentLoaded", function () {
-      const loginBtn = document.getElementById("loginBtn");
-      const uploadBtn = document.getElementById("uploadBtn");
-      const loginStatus = document.getElementById("loginStatus");
-      const uploadStatus = document.getElementById("uploadStatus");
+    const loginBtn = document.getElementById("loginBtn");
+    const uploadBtn = document.getElementById("uploadBtn");
+    const uploadSection = document.getElementById("upload-section");
+    const loginStatus = document.getElementById("loginStatus");
+    const uploadStatus = document.getElementById("uploadStatus");
 
-      loginBtn.addEventListener("click", () => {
-        const email = document.getElementById("adminEmail").value;
-        const password = document.getElementById("adminPassword").value;
+    loginBtn.addEventListener("click", () => {
+      const email = document.getElementById("adminEmail").value;
+      const password = document.getElementById("adminPassword").value;
+      loginStatus.textContent = "Logging in...";
 
-        loginStatus.textContent = "Logging in...";
-        firebase.auth().signInWithEmailAndPassword(email, password)
-          .then(() => {
-            loginStatus.textContent = "Login successful!";
-            document.getElementById("login-section").style.display = "none";
-            document.getElementById("upload-section").style.display = "block";
-          })
-          .catch((error) => {
-            console.error(error);
-            loginStatus.textContent = "Login failed: " + error.message;
-          });
-      });
-
-      uploadBtn.addEventListener("click", () => {
-        const title = document.getElementById("title").value;
-        const category = document.getElementById("category").value;
-        const article = document.getElementById("article").value;
-        const fileInput = document.getElementById("fileInput");
-        const file = fileInput.files[0];
-
-        if (!title || !category) {
-          uploadStatus.textContent = "Title and category are required.";
-          return;
-        }
-
-        if (!file) {
-          // Only save article without file
-          firebase.firestore().collection("posts").add({
-            title,
-            category,
-            article,
-            url: "",
-            timestamp: firebase.firestore.FieldValue.serverTimestamp()
-          }).then(() => {
-            uploadStatus.textContent = "Article saved without file.";
-          }).catch((err) => {
-            console.error(err);
-            uploadStatus.textContent = "Failed: " + err.message;
-          });
-          return;
-        }
-
-        uploadStatus.textContent = "Uploading file...";
-
-        const storageRef = firebase.storage().ref("uploads/" + file.name);
-        const uploadTask = storageRef.put(file);
-
-        uploadTask.on(
-          "state_changed",
-          (snapshot) => {
-            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-            uploadStatus.textContent = `Uploading: ${progress.toFixed(0)}%`;
-          },
-          (error) => {
-            console.error(error);
-            uploadStatus.textContent = "Upload error: " + error.message;
-          },
-          () => {
-            uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
-              firebase.firestore().collection("posts").add({
-                title,
-                category,
-                article,
-                url: downloadURL,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
-              }).then(() => {
-                uploadStatus.textContent = "Upload complete!";
-                fileInput.value = "";
-              }).catch((err) => {
-                uploadStatus.textContent = "Failed to save to database: " + err.message;
-              });
-            });
-          }
-        );
-      });
+      firebase.auth().signInWithEmailAndPassword(email, password)
+        .then(() => {
+          loginStatus.textContent = "Login successful!";
+          document.getElementById("login-section").style.display = "none";
+          uploadSection.classList.remove("hidden");
+          loadPosts();
+        })
+        .catch((err) => {
+          loginStatus.textContent = "Login failed: " + err.message;
+        });
     });
+
+    uploadBtn.addEventListener("click", async () => {
+      const title = document.getElementById("title").value;
+      const category = document.getElementById("category").value;
+      const fileInput = document.getElementById("file");
+      const file = fileInput.files[0];
+      const articleText = document.getElementById("articleText").value;
+
+      if (!title || !category || (category !== "Article" && !file && !articleText)) {
+        uploadStatus.textContent = "Fill all required fields.";
+        return;
+      }
+
+      uploadStatus.textContent = "Uploading...";
+
+      try {
+        let fileURL = "";
+        if (file) {
+          const storageRef = storage.ref(`uploads/${Date.now()}_${file.name}`);
+          await storageRef.put(file);
+          fileURL = await storageRef.getDownloadURL();
+        }
+
+        await db.collection("posts").add({
+          title,
+          category,
+          url: fileURL,
+          article: category === "Article" ? articleText : "",
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        uploadStatus.textContent = "Upload successful!";
+        fileInput.value = "";
+        document.getElementById("title").value = "";
+        document.getElementById("articleText").value = "";
+        document.getElementById("category").value = "";
+        loadPosts();
+      } catch (err) {
+        console.error(err);
+        uploadStatus.textContent = "Upload failed: " + err.message;
+      }
+    });
+
+    function loadPosts() {
+      const contentArea = document.getElementById("contentArea");
+      const selectedCategory = document.getElementById("categoryFilter").value.toLowerCase();
+      const searchTitle = document.getElementById("searchTitle").value.toLowerCase();
+
+      contentArea.innerHTML = "<p>Loading...</p>";
+
+      db.collection("posts").orderBy("timestamp", "desc").get()
+        .then(snapshot => {
+          contentArea.innerHTML = "";
+          snapshot.forEach(doc => {
+            const post = doc.data();
+            const titleMatch = post.title.toLowerCase().includes(searchTitle);
+            const categoryMatch = selectedCategory === "all" || post.category.toLowerCase() === selectedCategory;
+
+            if (titleMatch && categoryMatch) {
+              const div = document.createElement("div");
+              div.className = "card";
+
+              let html = `<h3>${post.title}</h3><p><strong>Category:</strong> ${post.category}</p>`;
+              if (post.article) html += `<p>${post.article}</p>`;
+              if (post.url) {
+                const ext = post.url.split('.').pop().split('?')[0].toLowerCase();
+                if (ext === "pdf") {
+                  html += `<iframe src="${post.url}" height="400"></iframe>`;
+                } else if (["jpg", "jpeg", "png", "gif"].includes(ext)) {
+                  html += `<img src="${post.url}" alt="Image">`;
+                } else if (["mp4", "webm"].includes(ext)) {
+                  html += `<video controls><source src="${post.url}" type="video/${ext}"></video>`;
+                } else {
+                  html += `<a href="${post.url}" target="_blank">Download File</a>`;
+                }
+              }
+
+              div.innerHTML = html;
+              contentArea.appendChild(div);
+            }
+          });
+
+          if (contentArea.innerHTML === "") {
+            contentArea.innerHTML = "<p>No posts found.</p>";
+          }
+        });
+    }
+
+    document.getElementById("categoryFilter").addEventListener("change", loadPosts);
+    document.getElementById("searchTitle").addEventListener("input", loadPosts);
   </script>
 </body>
 </html>
