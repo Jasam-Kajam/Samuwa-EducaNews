@@ -2,106 +2,37 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Admin Login - Samuwa EducaNews</title>
+  <title>Admin Panel - Samuwa EducaNews</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="style.css" />
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
-  <script src="firebase.js"></script>
-  <style>
-    body { font-family: Arial; padding: 20px; }
-    .hidden { display: none; }
-    input, select { display: block; margin: 10px 0; padding: 8px; width: 100%; }
-    button { padding: 10px; background: blue; color: white; border: none; cursor: pointer; }
-  </style>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 </head>
 <body>
-  <h1>Samuwa EducaNews Admin</h1>
+  <h1>Admin Panel - Samuwa EducaNews</h1>
 
-  <!-- Login form -->
-  <div id="loginSection">
-    <input type="email" id="emailInput" placeholder="Email" />
-    <input type="password" id="passwordInput" placeholder="Password" />
-    <button onclick="login()">Login</button>
+  <!-- Login Form -->
+  <div id="login-section">
+    <h2>Login</h2>
+    <input type="email" id="adminEmail" placeholder="Email" required />
+    <input type="password" id="adminPassword" placeholder="Password" required />
+    <button id="loginBtn">Login</button>
     <p id="loginStatus"></p>
   </div>
 
-  <!-- Upload form -->
-  <div id="uploadSection" class="hidden">
+  <!-- Upload Form (Hidden until logged in) -->
+  <div id="upload-section" style="display: none;">
     <h2>Upload Content</h2>
-    <input type="text" id="titleInput" placeholder="Post Title" />
-    <select id="categoryInput">
-      <option value="">Select Category</option>
-      <option value="Education">Education</option>
-      <option value="News">News</option>
-      <option value="Blog">Blog</option>
-    </select>
-    <input type="file" id="fileInput" />
+    <input type="text" id="title" placeholder="Title" required />
+    <input type="text" id="category" placeholder="Category (e.g. News, Blog)" required />
+    <input type="file" id="file" required />
     <button id="uploadBtn">Upload</button>
-    <button onclick="logout()">Logout</button>
+    <p id="uploadStatus"></p>
   </div>
 
-  <script>
-    // Login function
-    function login() {
-      const email = document.getElementById('emailInput').value;
-      const password = document.getElementById('passwordInput').value;
-      firebase.auth().signInWithEmailAndPassword(email, password)
-        .then(user => {
-          document.getElementById('loginSection').classList.add('hidden');
-          document.getElementById('uploadSection').classList.remove('hidden');
-        })
-        .catch(err => {
-          document.getElementById('loginStatus').innerText = "Login failed: " + err.message;
-        });
-    }
-
-    // Logout
-    function logout() {
-      firebase.auth().signOut().then(() => {
-        location.reload();
-      });
-    }
-
-    // Upload function
-    document.getElementById('uploadBtn').addEventListener('click', async () => {
-  const title = document.getElementById('titleInput').value;
-  const category = document.getElementById('categoryInput').value;
-  const file = document.getElementById('fileInput').files[0];
-  const uploadBtn = document.getElementById('uploadBtn');
-
-  if (!title || !category || !file) {
-    alert("Please fill all fields.");
-    return;
-  }
-
-  uploadBtn.textContent = "Uploading...";
-  uploadBtn.disabled = true;
-
-  try {
-    const ref = firebase.storage().ref(`uploads/${file.name}`);
-    const uploadTask = await ref.put(file);
-    const downloadURL = await uploadTask.ref.getDownloadURL();
-
-    await firebase.firestore().collection('posts').add({
-      title,
-      category,
-      fileURL: downloadURL,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
-
-    alert("✅ Uploaded successfully!");
-    // Clear inputs
-    document.getElementById('titleInput').value = "";
-    document.getElementById('categoryInput').value = "";
-    document.getElementById('fileInput').value = "";
-  } catch (e) {
-    alert("❌ Upload failed: " + e.message);
-  } finally {
-    uploadBtn.textContent = "Upload";
-    uploadBtn.disabled = false;
-  }
-});
-  </script>
+  <script src="firebase.js"></script>
+  <script src="admin.js"></script>
 </body>
 </html>
