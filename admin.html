@@ -2,15 +2,13 @@
 <html>
 <head>
   <title>Admin Panel</title>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 </head>
 <body>
-  <h2>Admin Panel</h2>
-
-  <!-- Login Section -->
+  <h2>Admin Login</h2>
   <div id="login-section">
     <input type="email" id="adminEmail" placeholder="Email"><br>
     <input type="password" id="adminPassword" placeholder="Password"><br>
@@ -18,19 +16,18 @@
     <p id="loginStatus"></p>
   </div>
 
-  <!-- Upload Section -->
-  <div id="upload-section" style="display: none;">
+  <div id="upload-section" style="display:none;">
+    <h2>Upload Content</h2>
     <input type="text" id="title" placeholder="Title"><br>
     <input type="text" id="category" placeholder="Category"><br>
-    <input type="file" id="file"><br>
-<textarea id="article" placeholder="Write article content here..." rows="1000"></textarea>
-<input type="file" id="file" />
-<button id="uploadBtn">Upload</button>
-<p id="uploadStatus"></p>
+    <textarea id="article" placeholder="Optional article text..." rows="4" cols="40"></textarea><br>
+    <input type="file" id="fileInput"><br>
+    <button id="uploadBtn">Upload</button>
+    <p id="uploadStatus"></p>
   </div>
 
   <script>
-    // Firebase config
+    // Your Firebase config here
     const firebaseConfig = {
       apiKey: "AIzaSyAwAxP-MWwNnKP59PA6joil4Ceq10eozlc",
       authDomain: "wafula-s-educational-posts.firebaseapp.com",
@@ -39,26 +36,24 @@
       messagingSenderId: "1040710248503",
       appId: "1:1040710248503:web:87fbd02de2b919511577b2"
     };
-
-    // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
 
     document.addEventListener("DOMContentLoaded", function () {
       const loginBtn = document.getElementById("loginBtn");
-      const uploadSection = document.getElementById("upload-section");
+      const uploadBtn = document.getElementById("uploadBtn");
       const loginStatus = document.getElementById("loginStatus");
+      const uploadStatus = document.getElementById("uploadStatus");
 
       loginBtn.addEventListener("click", () => {
         const email = document.getElementById("adminEmail").value;
         const password = document.getElementById("adminPassword").value;
 
         loginStatus.textContent = "Logging in...";
-
         firebase.auth().signInWithEmailAndPassword(email, password)
-          .then((userCredential) => {
+          .then(() => {
             loginStatus.textContent = "Login successful!";
             document.getElementById("login-section").style.display = "none";
-            uploadSection.style.display = "block";
+            document.getElementById("upload-section").style.display = "block";
           })
           .catch((error) => {
             console.error(error);
@@ -66,40 +61,67 @@
           });
       });
 
-      const uploadBtn = document.getElementById("uploadBtn");
-      const uploadStatus = document.getElementById("uploadStatus");
-
-      uploadBtn.addEventListener("click", async () => {
+      uploadBtn.addEventListener("click", () => {
         const title = document.getElementById("title").value;
         const category = document.getElementById("category").value;
-        const fileInput = document.getElementById("file");
+        const article = document.getElementById("article").value;
+        const fileInput = document.getElementById("fileInput");
         const file = fileInput.files[0];
 
-        if (!title || !category || !file) {
-          uploadStatus.textContent = "Please fill all fields.";
+        if (!title || !category) {
+          uploadStatus.textContent = "Title and category are required.";
           return;
         }
 
-        uploadStatus.textContent = "Uploading...";
-
-        try {
-          const storageRef = firebase.storage().ref(`uploads/${file.name}`);
-          await storageRef.put(file);
-          const fileURL = await storageRef.getDownloadURL();
-
-          await firebase.firestore().collection("posts").add({
+        if (!file) {
+          // Only save article without file
+          firebase.firestore().collection("posts").add({
             title,
             category,
-            url: fileURL,
-            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            article,
+            url: "",
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+          }).then(() => {
+            uploadStatus.textContent = "Article saved without file.";
+          }).catch((err) => {
+            console.error(err);
+            uploadStatus.textContent = "Failed: " + err.message;
           });
-
-          uploadStatus.textContent = "Upload successful!";
-          fileInput.value = "";
-        } catch (err) {
-          console.error(err);
-          uploadStatus.textContent = "Upload failed: " + err.message;
+          return;
         }
+
+        uploadStatus.textContent = "Uploading file...";
+
+        const storageRef = firebase.storage().ref("uploads/" + file.name);
+        const uploadTask = storageRef.put(file);
+
+        uploadTask.on(
+          "state_changed",
+          (snapshot) => {
+            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            uploadStatus.textContent = `Uploading: ${progress.toFixed(0)}%`;
+          },
+          (error) => {
+            console.error(error);
+            uploadStatus.textContent = "Upload error: " + error.message;
+          },
+          () => {
+            uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
+              firebase.firestore().collection("posts").add({
+                title,
+                category,
+                article,
+                url: downloadURL,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+              }).then(() => {
+                uploadStatus.textContent = "Upload complete!";
+                fileInput.value = "";
+              }).catch((err) => {
+                uploadStatus.textContent = "Failed to save to database: " + err.message;
+              });
+            });
+          }
+        );
       });
     });
   </script>
