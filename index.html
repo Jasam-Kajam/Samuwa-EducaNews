@@ -5,79 +5,69 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Samuwa EducaNews</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
   <style>
     body {
+      margin: 0;
       font-family: 'Roboto', sans-serif;
-      margin: 0;
-      padding: 0;
-      background-color: #f9f9f9;
+      background: #f2f4f7;
+      padding: 20px;
     }
-
     h1 {
-      background-color: #2c3e50;
-      color: #fff;
-      margin: 0;
-      padding: 20px;
       text-align: center;
+      font-family: 'Times New Roman', serif;
+      color: #2c3e50;
+      margin-bottom: 40px;
     }
-
-    #contentArea {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: 20px;
-      padding: 20px;
-    }
-
-    .postCard {
+    .post-card {
       background: #fff;
-      border-radius: 10px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
       padding: 20px;
-      transition: transform 0.2s;
+      margin-bottom: 30px;
+      transition: transform 0.2s ease;
     }
-
-    .postCard:hover {
-      transform: translateY(-5px);
+    .post-card:hover {
+      transform: translateY(-3px);
     }
-
-    .postTitle {
-      font-size: 1.25em;
-      margin: 0 0 10px;
-    }
-
-    .categoryTag {
-      display: inline-block;
-      background: #3498db;
-      color: white;
-      padding: 4px 10px;
-      font-size: 0.85em;
-      border-radius: 4px;
+    .post-title {
+      font-size: 24px;
+      font-family: 'Times New Roman', serif;
+      color: #2e2e2e;
       margin-bottom: 10px;
     }
-
-    iframe, img, video {
-      width: 100%;
-      max-height: 400px;
+    .post-content {
+      font-size: 16px;
+      line-height: 1.6;
+      color: #444;
+      white-space: pre-line;
+      margin-bottom: 15px;
+    }
+    .post-media {
+      margin: 15px 0;
+    }
+    iframe, video, img {
+      max-width: 100%;
       border-radius: 8px;
-      margin-top: 10px;
+      margin-bottom: 10px;
     }
-
-    p {
+    a.download-link {
+      display: inline-block;
       margin-top: 10px;
-    }
-
-    a {
-      color: #2980b9;
+      padding: 10px 15px;
+      background: #3498db;
+      color: white;
+      border-radius: 6px;
       text-decoration: none;
     }
-
-    a:hover {
-      text-decoration: underline;
+    a.download-link:hover {
+      background: #2980b9;
     }
   </style>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
 </head>
 <body>
   <h1>Samuwa EducaNews</h1>
@@ -89,7 +79,6 @@
       authDomain: "wafula-s-educational-posts.firebaseapp.com",
       projectId: "wafula-s-educational-posts"
     };
-
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
@@ -99,28 +88,27 @@
       querySnapshot.forEach((doc) => {
         const post = doc.data();
         const div = document.createElement("div");
-        div.classList.add("postCard");
+        div.className = "post-card";
 
-        let html = `
-          <div class="postTitle">${post.title}</div>
-          <div class="categoryTag">${post.category}</div>
-        `;
+        let html = `<div class="post-title">${post.title}</div>`;
 
         if (post.article) {
-          html += `<p>${post.article}</p>`;
+          html += `<div class="post-content">${post.article}</div>`;
         }
 
         if (post.url) {
           const ext = post.url.split('.').pop().split('?')[0].toLowerCase();
+          html += `<div class="post-media">`;
           if (ext === "pdf") {
             html += `<iframe src="${post.url}" height="400px"></iframe>`;
-          } else if (["jpg", "png", "jpeg", "gif"].includes(ext)) {
-            html += `<img src="${post.url}" alt="Image" />`;
+          } else if (["jpg", "jpeg", "png", "gif"].includes(ext)) {
+            html += `<img src="${post.url}" alt="Uploaded Image">`;
           } else if (["mp4", "webm"].includes(ext)) {
             html += `<video controls><source src="${post.url}" type="video/${ext}"></video>`;
           } else {
-            html += `<p><a href="${post.url}" target="_blank">Download Attached File</a></p>`;
+            html += `<a class="download-link" href="${post.url}" target="_blank">Download File</a>`;
           }
+          html += `</div>`;
         }
 
         div.innerHTML = html;
