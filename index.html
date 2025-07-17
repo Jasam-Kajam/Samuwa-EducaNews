@@ -2,40 +2,58 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Samuwa EducaNews</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
   <style>
     body {
       margin: 0;
       font-family: 'Roboto', sans-serif;
-      background: #f2f4f7;
+      background: #f4f6f9;
+      padding: 0;
+    }
+
+    header {
+      background-color: #007bff;
       padding: 20px;
-    }
-    h1 {
       text-align: center;
-      font-family: 'Times New Roman', serif;
-      color: #2c3e50;
-      margin-bottom: 40px;
     }
+
+    header h1 {
+      margin: 0;
+      font-family: 'Times New Roman', serif;
+      font-weight: bold;
+      font-size: 32px;
+      color: white;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 30px auto;
+      padding: 0 20px;
+    }
+
     .post-card {
-      background: #fff;
+      background: #ffffff;
       border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
       padding: 20px;
       margin-bottom: 30px;
       transition: transform 0.2s ease;
     }
+
     .post-card:hover {
       transform: translateY(-3px);
     }
+
     .post-title {
       font-size: 24px;
       font-family: 'Times New Roman', serif;
+      font-weight: bold;
       color: #2e2e2e;
       margin-bottom: 10px;
     }
+
     .post-content {
       font-size: 16px;
       line-height: 1.6;
@@ -43,14 +61,17 @@
       white-space: pre-line;
       margin-bottom: 15px;
     }
+
     .post-media {
       margin: 15px 0;
     }
+
     iframe, video, img {
       max-width: 100%;
       border-radius: 8px;
       margin-bottom: 10px;
     }
+
     a.download-link {
       display: inline-block;
       margin-top: 10px;
@@ -60,18 +81,24 @@
       border-radius: 6px;
       text-decoration: none;
     }
+
     a.download-link:hover {
       background: #2980b9;
     }
   </style>
 
+  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
 </head>
 <body>
-  <h1>Samuwa EducaNews</h1>
-  <div id="contentArea"></div>
+
+  <header>
+    <h1>Samuwa EducaNews</h1>
+  </header>
+
+  <div class="container" id="contentArea"></div>
 
   <script>
     const firebaseConfig = {
@@ -102,7 +129,7 @@
           if (ext === "pdf") {
             html += `<iframe src="${post.url}" height="400px"></iframe>`;
           } else if (["jpg", "jpeg", "png", "gif"].includes(ext)) {
-            html += `<img src="${post.url}" alt="Uploaded Image">`;
+            html += `<img src="${post.url}" alt="Image">`;
           } else if (["mp4", "webm"].includes(ext)) {
             html += `<video controls><source src="${post.url}" type="video/${ext}"></video>`;
           } else {
