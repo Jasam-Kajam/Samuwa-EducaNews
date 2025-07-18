@@ -101,47 +101,62 @@
   <div class="container" id="contentArea"></div>
 
   <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyAwAxP-MWwNnKP59PA6joil4Ceq10eozlc",
-      authDomain: "wafula-s-educational-posts.firebaseapp.com",
-      projectId: "wafula-s-educational-posts"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+  const firebaseConfig = {
+    apiKey: "AIzaSyAwAxP-MWwNnKP59PA6joil4Ceq10eozlc",
+    authDomain: "wafula-s-educational-posts.firebaseapp.com",
+    projectId: "wafula-s-educational-posts"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
 
-    const contentArea = document.getElementById("contentArea");
+  const contentArea = document.getElementById("contentArea");
 
-    db.collection("posts").orderBy("timestamp", "desc").get().then((querySnapshot) => {
-      querySnapshot.forEach((doc) => {
-        const post = doc.data();
-        const div = document.createElement("div");
-        div.className = "post-card";
+  // Set to track seen titles
+  const seenTitles = new Set();
 
-        let html = `<div class="post-title">${post.title}</div>`;
+  db.collection("posts").orderBy("timestamp", "desc").get().then((querySnapshot) => {
+    querySnapshot.forEach((doc) => {
+      const post = doc.data();
 
-        if (post.article) {
-          html += `<div class="post-content">${post.article}</div>`;
+      // ✅ Skip if this title was already shown
+      if (seenTitles.has(post.title.trim().toLowerCase())) {
+        return;
+      }
+      seenTitles.add(post.title.trim().toLowerCase());
+
+      const div = document.createElement("div");
+      div.style.border = "1px solid #ccc";
+      div.style.padding = "10px";
+      div.style.marginBottom = "15px";
+      div.style.backgroundColor = "#f9f9f9";
+      div.style.borderRadius = "8px";
+
+      let html = `<h3 style="font-family: 'Times New Roman', serif; font-weight: bold;">${post.title}</h3>`;
+      if (post.category) {
+        html += `<p style="font-family: 'Times New Roman', serif; font-weight: bold;">${post.category}</p>`;
+      }
+
+      if (post.article) {
+        html += `<p style="text-align: justify; font-family: 'Georgia', serif;">${post.article}</p>`;
+      }
+
+      if (post.url) {
+        const ext = post.url.split('.').pop().split('?')[0].toLowerCase();
+        if (ext === "pdf") {
+          html += `<iframe src="${post.url}" width="100%" height="400px"></iframe>`;
+        } else if (["jpg", "png", "jpeg", "gif"].includes(ext)) {
+          html += `<img src="${post.url}" style="max-width:100%; margin-top:10px;">`;
+        } else if (["mp4", "webm"].includes(ext)) {
+          html += `<video controls width="100%" style="margin-top:10px;"><source src="${post.url}" type="video/${ext}"></video>`;
+        } else {
+          html += `<a href="${post.url}" target="_blank">Download File</a>`;
         }
+      }
 
-        if (post.url) {
-          const ext = post.url.split('.').pop().split('?')[0].toLowerCase();
-          html += `<div class="post-media">`;
-          if (ext === "pdf") {
-            html += `<iframe src="${post.url}" height="400px"></iframe>`;
-          } else if (["jpg", "jpeg", "png", "gif"].includes(ext)) {
-            html += `<img src="${post.url}" alt="Image">`;
-          } else if (["mp4", "webm"].includes(ext)) {
-            html += `<video controls><source src="${post.url}" type="video/${ext}"></video>`;
-          } else {
-            html += `<a class="download-link" href="${post.url}" target="_blank">Download File</a>`;
-          }
-          html += `</div>`;
-        }
-
-        div.innerHTML = html;
-        contentArea.appendChild(div);
-      });
+      div.innerHTML = html;
+      contentArea.appendChild(div);
     });
-  </script>
+  });
+</script>
 </body>
 </html>
