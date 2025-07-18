@@ -31,13 +31,13 @@
     <input type="text" id="title" placeholder="Title"><br><br>
     <select id="category">
       <option value="">Select Category</option>
-      <option value="PDF">PDF</option>
-      <option value="Video">Video</option>
-      <option value="Image">Image</option>
       <option value="Article">Article</option>
+      <option value="Image">Image</option>
+      <option value="Video">Video</option>
+      <option value="PDF">PDF</option>
     </select><br><br>
     <input type="file" id="file"><br><br>
-    <textarea id="articleText" placeholder="Write article content here (for articles only)"></textarea><br><br>
+    <textarea id="articleText" placeholder="Write article here (optional)"></textarea><br><br>
     <button id="uploadBtn">Upload</button>
     <p id="uploadStatus"></p>
 
@@ -46,17 +46,16 @@
     <label for="categoryFilter">Filter by Category:</label>
     <select id="categoryFilter">
       <option value="all">All</option>
-      <option value="PDF">PDF</option>
-      <option value="Video">Video</option>
-      <option value="Image">Image</option>
       <option value="Article">Article</option>
+      <option value="Image">Image</option>
+      <option value="Video">Video</option>
+      <option value="PDF">PDF</option>
     </select>
     <input type="text" id="searchTitle" placeholder="Search by title..." style="margin-left: 10px;">
     <div id="contentArea"></div>
   </div>
 
   <script>
-    // Your Firebase config here
     const firebaseConfig = {
       apiKey: "AIzaSyAwAxP-MWwNnKP59PA6joil4Ceq10eozlc",
       authDomain: "wafula-s-educational-posts.firebaseapp.com",
@@ -100,8 +99,8 @@
       const file = fileInput.files[0];
       const articleText = document.getElementById("articleText").value;
 
-      if (!title || !category || (category !== "Article" && !file && !articleText)) {
-        uploadStatus.textContent = "Fill all required fields.";
+      if (!title || !category) {
+        uploadStatus.textContent = "Please provide title and category.";
         return;
       }
 
@@ -119,7 +118,7 @@
           title,
           category,
           url: fileURL,
-          article: category === "Article" ? articleText : "",
+          article: articleText,
           timestamp: firebase.firestore.FieldValue.serverTimestamp()
         });
 
@@ -155,7 +154,12 @@
               div.className = "card";
 
               let html = `<h3>${post.title}</h3><p><strong>Category:</strong> ${post.category}</p>`;
-              if (post.article) html += `<p>${post.article}</p>`;
+
+              if (post.article) {
+                const paragraphs = post.article.split('\n').map(p => `<p>${p.trim()}</p>`).join('');
+                html += paragraphs;
+              }
+
               if (post.url) {
                 const ext = post.url.split('.').pop().split('?')[0].toLowerCase();
                 if (ext === "pdf") {
