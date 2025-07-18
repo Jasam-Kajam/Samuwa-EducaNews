@@ -1,187 +1,182 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Upload Content - Samuwa EducaNews</title>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Upload Article - Samuwa EducaNews</title>
   <style>
     body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #f0f2f5;
+      font-family: "Segoe UI", sans-serif;
+      background-color: #f3f4f6;
       margin: 0;
       padding: 0;
     }
-
-    header {
-      background-color: #0047ab;
-      padding: 20px;
-      color: white;
-      font-family: 'Times New Roman', serif;
-      font-size: 24px;
-      font-weight: bold;
-      text-align: center;
-    }
-
-    .container {
-      max-width: 700px;
-      margin: 30px auto;
-      background: white;
-      padding: 25px;
+    .upload-container {
+      max-width: 600px;
+      margin: 2rem auto;
+      background-color: #fff;
+      padding: 2rem;
       border-radius: 12px;
-      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+      box-shadow: 0 0 10px rgba(0,0,0,0.08);
     }
-
-    h2 {
-      font-family: 'Times New Roman', serif;
-      margin-bottom: 15px;
+    .upload-container h2 {
+      font-family: "Times New Roman", serif;
       font-weight: bold;
+      background: #007BFF;
+      color: white;
+      padding: 1rem;
+      text-align: center;
+      border-radius: 8px;
     }
-
-    label {
+    .form-group {
+      margin-bottom: 1rem;
+    }
+    .form-group label {
       display: block;
-      margin-top: 15px;
-      margin-bottom: 5px;
       font-weight: 600;
+      margin-bottom: 0.4rem;
     }
-
-    select, input[type="text"], textarea {
+    input[type="text"],
+    textarea,
+    select {
       width: 100%;
-      padding: 10px;
+      padding: 0.7rem;
       border-radius: 8px;
       border: 1px solid #ccc;
-      font-size: 15px;
+      font-size: 1rem;
     }
-
     textarea {
-      min-height: 160px;
-      resize: vertical;
+      min-height: 150px;
+      font-family: sans-serif;
     }
-
-    .radio-group {
-      display: flex;
-      gap: 20px;
-      margin-top: 5px;
+    input[type="file"] {
+      margin-top: 0.5rem;
     }
-
-    .radio-group label {
-      font-weight: normal;
-    }
-
-    button {
-      margin-top: 20px;
-      padding: 12px 20px;
-      background-color: #0047ab;
+    .submit-btn {
+      background-color: #007BFF;
       color: white;
-      font-size: 16px;
+      padding: 0.8rem 2rem;
       border: none;
       border-radius: 8px;
       cursor: pointer;
+      font-size: 1rem;
     }
-
-    button:hover {
-      background-color: #003585;
+    .submit-btn:hover {
+      background-color: #0056b3;
     }
-
-    .footer {
-      text-align: center;
-      font-size: 14px;
-      color: #777;
-      margin-top: 40px;
+    .type-options {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    .type-options label {
+      font-weight: normal;
     }
   </style>
 </head>
 <body>
+  <div class="upload-container">
+    <h2>Samuwa EducaNews - Upload</h2>
 
-<header>Samuwa EducaNews</header>
+    <div class="form-group">
+      <label>Type</label>
+      <div class="type-options">
+        <label><input type="radio" name="type" value="Article" checked /> Article</label>
+        <label><input type="radio" name="type" value="Short video" /> Short Video</label>
+        <label><input type="radio" name="type" value="Website" /> Website</label>
+      </div>
+    </div>
 
-<div class="container">
-  <h2>Upload Content</h2>
+    <div class="form-group">
+      <label for="title">Title</label>
+      <input type="text" id="title" placeholder="Enter article title..." />
+    </div>
 
-  <label>Type</label>
-  <div class="radio-group">
-    <label><input type="radio" name="type" value="Article" checked> Article</label>
-    <label><input type="radio" name="type" value="Short video"> Short Video</label>
-    <label><input type="radio" name="type" value="Website"> Website</label>
+    <div class="form-group">
+      <label for="subtitle">Subtitle</label>
+      <input type="text" id="subtitle" placeholder="Optional subtitle..." />
+    </div>
+
+    <div class="form-group">
+      <label for="category">Category</label>
+      <select id="category">
+        <option value="Education">Education</option>
+        <option value="Technology">Technology</option>
+        <option value="Health">Health</option>
+        <option value="Jobs">Jobs</option>
+        <option value="Scholarships">Scholarships</option>
+        <option value="News">News</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="content">Content</label>
+      <textarea id="content" placeholder="Write your article..."></textarea>
+    </div>
+
+    <div class="form-group">
+      <label for="imageUpload">Upload Image (optional)</label>
+      <input type="file" id="imageUpload" accept="image/*" />
+    </div>
+
+    <button class="submit-btn" id="submitBtn">Submit</button>
   </div>
 
-  <label>Title</label>
-  <input type="text" id="title" placeholder="Enter article title" />
+  <!-- Firebase Setup -->
+  <script type="module">
+    // Firebase config
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
-  <label>Category</label>
-  <select id="category">
-    <option value="Education">Education</option>
-    <option value="News">News</option>
-    <option value="Technology">Technology</option>
-    <option value="Entertainment">Entertainment</option>
-    <option value="Business">Business</option>
-  </select>
+    const firebaseConfig = {
+      apiKey: "AIzaSyAwAxP-MWwNnKP59PA6joil4Ceq10eozlc",
+      authDomain: "wafula-s-educational-posts.firebaseapp.com",
+      projectId: "wafula-s-educational-posts",
+      storageBucket: "wafula-s-educational-posts.appspot.com",
+      messagingSenderId: "your-messaging-sender-id",
+      appId: "your-app-id"
+    };
 
-  <label>Content</label>
-  <textarea id="content" placeholder="Write your article here..."></textarea>
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
 
-  <label>Image (optional)</label>
-  <input type="file" id="imageUpload" accept="image/*" />
+    const submitBtn = document.getElementById("submitBtn");
 
-  <button onclick="uploadContent()">Submit</button>
-</div>
+    submitBtn.onclick = async () => {
+      const title = document.getElementById("title").value.trim();
+      const subtitle = document.getElementById("subtitle").value.trim();
+      const content = document.getElementById("content").value.trim();
+      const category = document.getElementById("category").value;
+      const type = document.querySelector('input[name="type"]:checked').value;
+      const imageFile = document.getElementById("imageUpload").files[0];
 
-<div class="footer">© 2025 Samuwa EducaNews. All Rights Reserved.</div>
+      if (!title || !content) {
+        alert("Please fill in the required fields.");
+        return;
+      }
 
-<!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+      let imageUrl = "";
+      if (imageFile) {
+        const imageRef = ref(storage, `articleImages/${Date.now()}_${imageFile.name}`);
+        await uploadBytes(imageRef, imageFile);
+        imageUrl = await getDownloadURL(imageRef);
+      }
 
-<script>
-  // ✅ Your Firebase Config
-  const firebaseConfig = {
-    apiKey: "AIzaSyAwAxP-MWwNnKP59PA6joil4Ceq10eozlc",
-    authDomain: "wafula-s-educational-posts.firebaseapp.com",
-    projectId: "wafula-s-educational-posts",
-    storageBucket: "wafula-s-educational-posts.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID"
-  };
+      await addDoc(collection(db, "articles"), {
+        title,
+        subtitle,
+        category,
+        type,
+        content,
+        imageUrl,
+        timestamp: new Date()
+      });
 
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
-  const storage = firebase.storage();
-
-  async function uploadContent() {
-    const title = document.getElementById('title').value.trim();
-    const category = document.getElementById('category').value;
-    const content = document.getElementById('content').value.trim();
-    const type = document.querySelector('input[name="type"]:checked').value;
-    const imageFile = document.getElementById('imageUpload').files[0];
-
-    if (!title || !content) {
-      alert('Please fill in the title and content.');
-      return;
-    }
-
-    let imageUrl = '';
-
-    if (imageFile) {
-      const imageRef = storage.ref('images/' + Date.now() + '_' + imageFile.name);
-      const snapshot = await imageRef.put(imageFile);
-      imageUrl = await snapshot.ref.getDownloadURL();
-    }
-
-    await db.collection("articles").add({
-      title,
-      category,
-      content,
-      type,
-      imageUrl,
-      timestamp: firebase.firestore.FieldValue.serverTimestamp()
-    });
-
-    alert('Upload successful!');
-    document.getElementById('title').value = '';
-    document.getElementById('content').value = '';
-    document.getElementById('imageUpload').value = '';
-  }
-</script>
-
+      alert("Article uploaded successfully!");
+      location.reload();
+    };
+  </script>
 </body>
 </html>
