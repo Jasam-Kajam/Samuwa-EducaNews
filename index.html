@@ -58,36 +58,25 @@
   <div class="footer">© 2025 Samuwa EducaNews. Powered by EdukatePost Blogspot.</div>
 
   <script>
-    const blogUrl = "https://edukatepost.blogspot.com/feeds/posts/default?alt=json";
+  function renderFeed(data) {
+    const posts = data.feed.entry || [];
+    let html = '';
+    posts.forEach(entry => {
+      const title = entry.title.$t;
+      const content = entry.content?.$t || '';
+      const link = entry.link.find(l => l.rel === 'alternate')?.href || '#';
+      html += `
+        <div class="blog-post">
+          <h3><a href="${link}" target="_blank">${title}</a></h3>
+          <p>${content.substring(0, 200)}...</p>
+        </div>
+      `;
+    });
+    document.getElementById('blogContainer').innerHTML = html;
+  }
+</script>
 
-    fetch(blogUrl)
-      .then(res => res.json())
-      .then(data => {
-        const entries = data.feed.entry || [];
-        let html = "";
-
-        entries.forEach(entry => {
-          const title = entry.title.$t;
-          const content = entry.content.$t;
-          const link = entry.link.find(l => l.rel === "alternate").href;
-          const date = new Date(entry.published.$t).toLocaleDateString();
-
-          html += `
-            <div class="article-card">
-              <h2>${title}</h2>
-              <small>${date}</small>
-              <p>${content.slice(0, 300)}...</p>
-              <a href="${link}" target="_blank">Read Full Article</a>
-            </div>
-          `;
-        });
-
-        document.getElementById("blogPosts").innerHTML = html;
-      })
-      .catch(err => {
-        console.error("Error loading blog:", err);
-        document.getElementById("blogPosts").innerHTML = "<p>Failed to load articles. Please check your blog settings.</p>";
-      });
-  </script>
+<script src="https://edukatepost.blogspot.com/feeds/posts/default?alt=json-in-script&callback=renderFeed"></script>
+<div id="blogContainer">Loading blog posts...</div>
 </body>
 </html>
