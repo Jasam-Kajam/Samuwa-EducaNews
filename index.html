@@ -137,8 +137,13 @@
       }
 
       if (post.article) {
-        html += `<p style="text-align: justify; font-family: 'Georgia', serif;">${post.article}</p>`;
-      }
+  const paragraphs = post.article
+    .split(/\n+/) // Split by one or more line breaks
+    .filter(p => p.trim() !== '') // Remove empty lines
+    .map(p => `<p style="text-align: justify; font-family: 'Georgia', serif; margin-bottom: 1em;">${p.trim()}</p>`)
+    .join('');
+  html += paragraphs;
+}
 
       if (post.url) {
         const ext = post.url.split('.').pop().split('?')[0].toLowerCase();
@@ -155,7 +160,7 @@
 
       div.innerHTML = html;
       contentArea.appendChild(div);
-    });
+    }); 
   });
 </script>
 </body>
