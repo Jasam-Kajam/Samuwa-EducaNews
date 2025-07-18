@@ -167,27 +167,6 @@
       contentArea.appendChild(div);
     }); 
   });
-<script>
-  const db = firebase.firestore();
-
-  document.querySelector('footer button').addEventListener('click', function () {
-    const email = document.querySelector('footer input[type="email"]').value.trim();
-
-    if (!email) {
-      alert("Please enter an email.");
-      return;
-    }
-
-    db.collection("subscribers").add({ email: email, subscribedAt: new Date() })
-      .then(() => {
-        alert("Subscription successful. Thank you!");
-        document.querySelector('footer input[type="email"]').value = "";
-      })
-      .catch((error) => {
-        console.error("Subscription error:", error);
-        alert("Failed to subscribe. Try again later.");
-      });
-  });
 </script>
 <footer style="background-color: #0d47a1; color: white; padding: 40px 20px; font-family: Arial, sans-serif;">
   <div style="display: flex; flex-wrap: wrap; justify-content: space-between; max-width: 1200px; margin: auto;">
@@ -231,5 +210,17 @@
     &copy; 2025 Samuwa EducaNews. All rights reserved.
   </div>
 </footer>
+<script>
+  document.querySelector('footer button').addEventListener('click', function () {
+    const email = document.querySelector('footer input[type="email"]').value.trim();
+    if (email === "") {
+      alert("Please enter your email address.");
+    } else {
+      alert("Thank you for subscribing! You'll receive updates to " + email);
+      // You can also clear the field if you like:
+      document.querySelector('footer input[type="email"]').value = "";
+    }
+  });
+</script>
 </body>
 </html>
