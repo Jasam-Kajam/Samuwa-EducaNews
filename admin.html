@@ -2,107 +2,106 @@
 <head>
   <meta charset="UTF-8">
   <title>Admin Panel</title>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage.js"></script>
   <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
   <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js"></script>
   <style>
-    body { font-family: Arial; padding: 20px; }
-    #editor { height: 300px; background: #fff; }
-    #loginContainer, #adminPanel { max-width: 600px; margin: auto; }
-    input, button, select { display: block; margin: 10px 0; padding: 8px; width: 100%; }
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    #editor-container { height: 300px; }
+    .hidden { display: none; }
   </style>
 </head>
-<body><div id="loginContainer">
-  <h2>Admin Login</h2>
-  <input type="email" id="email" placeholder="Email">
-  <input type="password" id="password" placeholder="Password">
-  <button onclick="login()">Login</button>
-</div><div id="adminPanel" style="display:none;">
-  <h2>Post New Article</h2>
-  <input type="text" id="title" placeholder="Article Title">
-  <select id="category">
-    <option value="education">Education</option>
-    <option value="news">News</option>
-    <option value="technology">Technology</option>
-  </select>
-  <div id="editor"></div>
-  <button onclick="uploadArticle()">Upload Article</button>
-  <button onclick="logout()">Logout</button>
-</div><script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyAwAxP-MWwNnKP59PA6joil4Ceq10eozlc",
-    authDomain: "wafula-s-educational-posts.firebaseapp.com",
-    projectId: "wafula-s-educational-posts",
-    storageBucket: "wafula-s-educational-posts.appspot.com",
-    messagingSenderId: "",
-    appId: ""
-  };
+<body>
+  <div id="login-section">
+    <h2>Admin Login</h2>
+    <input type="email" id="email" placeholder="Email"><br><br>
+    <input type="password" id="password" placeholder="Password"><br><br>
+    <button onclick="login()">Login</button>
+    <p id="login-error" style="color:red;"></p>
+  </div>  <div id="editor-section" class="hidden">
+    <h2>Post Article</h2>
+    <input type="text" id="title" placeholder="Title"><br><br>
+    <select id="category">
+      <option value="education">Education</option>
+      <option value="news">News</option>
+      <option value="tech">Tech</option>
+    </select><br><br>
+    <div id="editor-container"></div><br>
+    <button onclick="uploadArticle()">Upload</button>
+    <button onclick="logout()">Logout</button>
+    <p id="upload-status"></p>
+  </div>  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyAwAxP-MWwNnKP59PA6joil4Ceq10eozlc",
+      authDomain: "wafula-s-educational-posts.firebaseapp.com",
+      projectId: "wafula-s-educational-posts",
+      storageBucket: "wafula-s-educational-posts.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
 
-  const app = firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-  const db = firebase.firestore();
-  const storage = firebase.storage();
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    const storage = firebase.storage();
 
-  const quill = new Quill('#editor', {
-    theme: 'snow',
-    modules: {
-      toolbar: [
-        [{ header: [1, 2, 3, false] }],
-        ['bold', 'italic', 'underline'],
-        ['image', 'code-block'],
-        [{ list: 'ordered' }, { list: 'bullet' }],
-        ['link']
-      ]
-    }
-  });
-
-  function login() {
-    const email = document.getElementById('email').value;
-    const pass = document.getElementById('password').value;
-    auth.signInWithEmailAndPassword(email, pass)
-      .then(() => {
-        document.getElementById('loginContainer').style.display = 'none';
-        document.getElementById('adminPanel').style.display = 'block';
-      })
-      .catch(e => alert(e.message));
-  }
-
-  function logout() {
-    auth.signOut().then(() => {
-      document.getElementById('loginContainer').style.display = 'block';
-      document.getElementById('adminPanel').style.display = 'none';
-    });
-  }
-
-  auth.onAuthStateChanged(user => {
-    if (user) {
-      document.getElementById('loginContainer').style.display = 'none';
-      document.getElementById('adminPanel').style.display = 'block';
-    }
-  });
-
-  async function uploadArticle() {
-    const title = document.getElementById('title').value;
-    const category = document.getElementById('category').value;
-    const html = quill.root.innerHTML;
-    const file = new Blob([html], { type: 'text/html' });
-    const filename = `articles/${Date.now()}-${title.replace(/\s+/g, '_')}.html`;
-    const ref = storage.ref(filename);
-    await ref.put(file);
-    const url = await ref.getDownloadURL();
-
-    await db.collection('articles').add({
-      title,
-      category,
-      contentUrl: url,
-      timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    const editor = new Quill('#editor-container', {
+      theme: 'snow',
+      modules: {
+        toolbar: [
+          ['bold', 'italic', 'underline', 'strike'],
+          [{ 'header': 1 }, { 'header': 2 }],
+          [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+          ['link', 'image'],
+          ['clean']
+        ]
+      }
     });
 
-    alert('Article uploaded successfully!');
-    quill.setContents([]);
-  }
-</script></body>
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        document.getElementById('login-section').classList.add('hidden');
+        document.getElementById('editor-section').classList.remove('hidden');
+      } else {
+        document.getElementById('login-section').classList.remove('hidden');
+        document.getElementById('editor-section').classList.add('hidden');
+      }
+    });
+
+    function login() {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      auth.signInWithEmailAndPassword(email, password)
+        .catch(err => {
+          document.getElementById('login-error').textContent = err.message;
+        });
+    }
+
+    function logout() {
+      auth.signOut();
+    }
+
+    function uploadArticle() {
+      const title = document.getElementById('title').value.trim();
+      const category = document.getElementById('category').value;
+      const content = editor.root.innerHTML.trim();
+
+      if (content.length > 20000) {
+        document.getElementById('upload-status').textContent = 'Article too long. Please shorten it.';
+        return;
+      }
+
+      db.collection('articles').add({
+        title, category, content,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      }).then(() => {
+        document.getElementById('upload-status').textContent = 'Article uploaded successfully!';
+      }).catch(error => {
+        document.getElementById('upload-status').textContent = error.message;
+      });
+    }
+  </script></body>
 </html>
