@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Article Viewer</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f0f2f5;
+      padding: 2rem;
+    }
+    .container {
+      max-width: 800px;
+      margin: auto;
+      background: #fff;
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 1px 8px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #007bff;
+    }
+    .content {
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1 id="title">Loading...</h1>
+  <div class="content" id="content">Please wait while we fetch the article...</div>
+</div>
+
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
+
+<!-- Firebase Config -->
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyAwAxP-MWwNnKP59PA6joil4Ceq10eozlc",
+    authDomain: "wafula-s-educational-posts.firebaseapp.com",
+    projectId: "wafula-s-educational-posts",
+    storageBucket: "wafula-s-educational-posts.appspot.com",
+    messagingSenderId: "YOUR_MESSAGING_ID",
+    appId: "YOUR_APP_ID"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+</script>
+
+<!-- Load Single Article -->
+<script>
+  const urlParams = new URLSearchParams(window.location.search);
+  const articleId = urlParams.get('id');
+
+  if (!articleId) {
+    document.getElementById('title').textContent = "Article Not Found";
+    document.getElementById('content').innerHTML = "<p>Missing article ID in URL.</p>";
+  } else {
+    db.collection("articles").doc(articleId).get().then(doc => {
+      if (doc.exists) {
+        const data = doc.data();
+        document.getElementById('title').textContent = data.title || "Untitled";
+        document.getElementById('content').innerHTML = data.content || "<p>No content available.</p>";
+      } else {
+        document.getElementById('title').textContent = "Article Not Found";
+        document.getElementById('content').innerHTML = "<p>The requested article does not exist.</p>";
+      }
+    }).catch(error => {
+      document.getElementById('title').textContent = "Error";
+      document.getElementById('content').innerHTML = "<p>There was a problem loading the article.</p>";
+      console.error(error);
+    });
+  }
+</script>
+
+</body>
+</html>
