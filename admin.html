@@ -1,102 +1,95 @@
+===== admin.html =====
+
 <!DOCTYPE html><html>
 <head>
-  <title>Admin Panel - Wafula Educational Posts</title>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
+  <title>Admin Panel</title>
+  <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js"></script>
   <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
-  <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet" />
-  <style>
-    body { font-family: sans-serif; padding: 20px; }
-    #loginForm, #adminPanel { max-width: 600px; margin: auto; }
-    #editor { height: 300px; background: #fff; }
-    #progress { margin-top: 10px; }
-  </style>
+  <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+  <style> #editor { height: 300px; } </style>
 </head>
 <body>
-  <div id="loginForm">
-    <h2>Admin Login</h2>
-    <input type="email" id="email" placeholder="Email"><br><br>
-    <input type="password" id="password" placeholder="Password"><br><br>
-    <button onclick="login()">Login</button>
-  </div>  <div id="adminPanel" style="display: none">
-    <h2>Post New Article</h2>
-    <input type="text" id="title" placeholder="Article Title"><br><br>
-    <select id="category">
-      <option value="education">Education</option>
-      <option value="news">News</option>
-      <option value="announcements">Announcements</option>
-    </select><br><br>
-    <div id="editor"></div><br>
-    <button onclick="uploadPost()">Upload</button>
-    <div id="progress"></div>
-    <br><button onclick="logout()">Logout</button>
-  </div>  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyAwAxP-MWwNnKP59PA6joil4Ceq10eozlc",
-      authDomain: "wafula-s-educational-posts.firebaseapp.com",
-      projectId: "wafula-s-educational-posts",
-      storageBucket: "wafula-s-educational-posts.appspot.com",
-    };
-
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
+  <h2>Post New Article</h2>
+  <input id="title" placeholder="Article Title"><br><br>
+  <select id="category">
+    <option value="education">Education</option>
+    <option value="news">News</option>
+  </select><br><br>
+  <div id="editor"></div><br>
+  <button onclick="uploadArticle()">Publish</button>  <script>
+    const firebaseConfig = { /* your config here */ };
+    const app = firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-    const storage = firebase.storage();
 
-    const quill = new Quill('#editor', {
-      theme: 'snow',
-      modules: {
-        toolbar: [
-          [{ 'header': [1, 2, false] }],
-          ['bold', 'italic', 'underline'],
-          ['image', 'code-block'],
-          [{ 'list': 'ordered' }, { 'list': 'bullet' }],
-          ['clean']
-        ]
-      }
-    });
+    const quill = new Quill('#editor', { theme: 'snow' });
 
-    function login() {
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
-      auth.signInWithEmailAndPassword(email, password)
-        .then(() => {
-          document.getElementById('loginForm').style.display = 'none';
-          document.getElementById('adminPanel').style.display = 'block';
-        })
-        .catch(err => alert("Login failed: " + err.message));
-    }
-
-    function logout() {
-      auth.signOut().then(() => {
-        document.getElementById('adminPanel').style.display = 'none';
-        document.getElementById('loginForm').style.display = 'block';
-      });
-    }
-
-    function uploadPost() {
+    async function uploadArticle() {
       const title = document.getElementById('title').value;
       const category = document.getElementById('category').value;
       const content = quill.root.innerHTML;
 
-      if (!title || !content) return alert("Fill all fields");
+      await db.collection('articles').add({
+        title, category, content, createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
 
-      if (content.length > 900000) return alert("Article too long. Please shorten.");
-
-      const timestamp = new Date().toISOString();
-      const post = { title, category, content, timestamp };
-
-      db.collection("posts").add(post)
-        .then(() => {
-          document.getElementById('progress').innerText = "Upload successful!";
-        })
-        .catch(err => {
-          document.getElementById('progress').innerText = "Upload failed: " + err.message;
-        });
+      alert('Article uploaded!');
     }
+  </script></body>
+</html>===== index.html =====
+
+<!DOCTYPE html><html>
+<head>
+  <title>Article List</title>
+  <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js"></script>
+</head>
+<body>
+  <h2>All Articles</h2>
+  <div id="articles"></div>  <script>
+    const firebaseConfig = { /* your config here */ };
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    db.collection('articles').orderBy('createdAt', 'desc').get().then(snapshot => {
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        document.getElementById('articles').innerHTML += `
+          <div>
+            <h3>${data.title}</h3>
+            <p>${data.content.slice(0, 100)}...</p>
+            <a href="article.html?id=${doc.id}">Read More</a>
+          </div><hr>
+        `;
+      });
+    });
+  </script></body>
+</html>===== article.html =====
+
+<!DOCTYPE html><html>
+<head>
+  <title>Read Article</title>
+  <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js"></script>
+</head>
+<body>
+  <h1 id="title"></h1>
+  <div id="content"></div>  <script>
+    const firebaseConfig = { /* your config here */ };
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get('id');
+
+    db.collection('articles').doc(id).get().then(doc => {
+      if (doc.exists) {
+        const data = doc.data();
+        document.getElementById('title').textContent = data.title;
+        document.getElementById('content').innerHTML = data.content;
+      } else {
+        document.getElementById('content').textContent = 'Article not found.';
+      }
+    });
   </script></body>
 </html>
