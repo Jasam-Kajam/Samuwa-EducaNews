@@ -1,169 +1,99 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Admin - Samuwa EducaNews</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet" />
+  <title>Admin Panel - Samuwa EducaNews</title>
+  <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
   <style>
     body {
       font-family: Arial, sans-serif;
       margin: 20px;
     }
-    .container {
-      max-width: 800px;
-      margin: auto;
+    #editor-container {
+      height: 300px;
     }
-    input, select, button {
-      display: block;
-      width: 100%;
-      margin-bottom: 15px;
-      padding: 10px;
-    }
-    .preview {
-      margin-top: 10px;
-      max-width: 100%;
-      height: auto;
-    }
-    .toolbar {
-      text-align: right;
+    #logout {
+      float: right;
+      margin-top: -40px;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h2>Admin Panel - Samuwa EducaNews</h2>
-
-    <div id="loginSection">
-      <input type="email" id="adminEmail" placeholder="Admin Email" />
-      <input type="password" id="adminPassword" placeholder="Password" />
-      <button onclick="login()">Login</button>
-    </div>
-
-    <div id="adminSection" style="display:none;">
-      <div class="toolbar">
-        <button onclick="logout()">Logout</button>
-      </div>
-
-      <input type="text" id="title" placeholder="Article Title" required />
-      <input type="text" id="category" placeholder="Category" required />
-      <div id="editor" style="height: 200px;"></div>
-      <input type="file" id="mediaFile" />
-      <img id="preview" class="preview" style="display:none;" />
-
-      <button onclick="uploadContent()">Upload Article</button>
-      <p id="status"></p>
-    </div>
-  </div>
-
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
-  <!-- Quill -->
-  <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
-
-  <script>
+  <h1>Samuwa EducaNews Admin Panel</h1>
+  <button id="logout">Logout</button>  <form id="postForm">
+    <input type="text" id="title" placeholder="Post Title" required><br><br>
+    <select id="category" required>
+      <option value="Education">Education</option>
+      <option value="News">News</option>
+      <option value="Technology">Technology</option>
+      <option value="General">General</option>
+    </select><br><br>
+    <div id="editor-container"></div>
+    <br>
+    <input type="file" id="file" /> <br><br>
+    <button type="submit">Publish</button>
+  </form>  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>  <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>  <script>
     const firebaseConfig = {
       apiKey: "AIzaSyAwAxP-MWwNnKP59PA6joil4Ceq10eozlc",
       authDomain: "wafula-s-educational-posts.firebaseapp.com",
       projectId: "wafula-s-educational-posts",
-      storageBucket: "wafula-s-educational-posts.appspot.com",
+      storageBucket: "wafula-s-educational-posts.appspot.com"
     };
-
     firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
     const db = firebase.firestore();
     const storage = firebase.storage();
+    const auth = firebase.auth();
 
-    const quill = new Quill('#editor', {
-      theme: 'snow'
-    });
-
-    // Show image preview
-    document.getElementById("mediaFile").addEventListener("change", (e) => {
-      const file = e.target.files[0];
-      if (file && file.type.startsWith("image/")) {
-        const reader = new FileReader();
-        reader.onload = () => {
-          document.getElementById("preview").src = reader.result;
-          document.getElementById("preview").style.display = "block";
-        };
-        reader.readAsDataURL(file);
-      } else {
-        document.getElementById("preview").style.display = "none";
+    // Admin auth check
+    auth.onAuthStateChanged(user => {
+      if (!user) {
+        window.location = "login.html";
       }
     });
 
-    // Login function
-    function login() {
-      const email = document.getElementById("adminEmail").value;
-      const password = document.getElementById("adminPassword").value;
-      auth.signInWithEmailAndPassword(email, password)
-        .then(() => {
-          document.getElementById("loginSection").style.display = "none";
-          document.getElementById("adminSection").style.display = "block";
-        })
-        .catch((error) => {
-          alert("Login failed: " + error.message);
-        });
+    document.getElementById("logout").onclick = () => {
+      auth.signOut();
     }
 
-    function logout() {
-      auth.signOut().then(() => {
-        document.getElementById("loginSection").style.display = "block";
-        document.getElementById("adminSection").style.display = "none";
-      });
-    }
-
-    auth.onAuthStateChanged((user) => {
-      if (user) {
-        document.getElementById("loginSection").style.display = "none";
-        document.getElementById("adminSection").style.display = "block";
-      } else {
-        document.getElementById("loginSection").style.display = "block";
-        document.getElementById("adminSection").style.display = "none";
+    const quill = new Quill('#editor-container', {
+      theme: 'snow',
+      modules: {
+        toolbar: [
+          [{ 'header': [1, 2, false] }],
+          ['bold', 'italic', 'underline'],
+          ['image', 'code-block'],
+          [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+          ['clean']
+        ]
       }
     });
 
-    // Upload content
-    async function uploadContent() {
-      const title = document.getElementById("title").value.trim();
-      const category = document.getElementById("category").value.trim();
-      const articleHTML = quill.root.innerHTML.trim();
-      const file = document.getElementById("mediaFile").files[0];
+    document.getElementById("postForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
 
-      if (!title || !category || !articleHTML) {
-        alert("Please fill all fields.");
-        return;
-      }
-
-      document.getElementById("status").textContent = "Uploading...";
-
-      let fileURL = null;
+      const title = document.getElementById("title").value;
+      const category = document.getElementById("category").value;
+      const article = quill.root.innerHTML;
+      const file = document.getElementById("file").files[0];
+      let url = "";
 
       if (file) {
-        const ref = storage.ref("uploads/" + Date.now() + "_" + file.name);
-        await ref.put(file);
-        fileURL = await ref.getDownloadURL();
+        const storageRef = storage.ref("uploads/" + Date.now() + "_" + file.name);
+        await storageRef.put(file);
+        url = await storageRef.getDownloadURL();
       }
 
       await db.collection("posts").add({
         title,
         category,
-        article: articleHTML,
-        url: fileURL,
+        article,
+        url,
         timestamp: firebase.firestore.FieldValue.serverTimestamp()
       });
 
-      document.getElementById("status").textContent = "Upload successful!";
-      document.getElementById("title").value = "";
-      document.getElementById("category").value = "";
-      quill.root.innerHTML = "";
-      document.getElementById("mediaFile").value = "";
-      document.getElementById("preview").style.display = "none";
-    }
-  </script>
-</body>
+      alert("Post published successfully");
+      document.getElementById("postForm").reset();
+      quill.setContents([]);
+    });
+  </script></body>
 </html>
