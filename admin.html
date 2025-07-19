@@ -1,96 +1,43 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Admin | Samuwa EducaNews</title>
-  <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet" />
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-      background-color: #f5f5f5;
-    }
-    h2 {
-      color: #007bff;
-    }
-    input, button {
-      padding: 10px;
-      margin-bottom: 10px;
-      width: 100%;
-      max-width: 400px;
-    }
-    #editor {
-      height: 250px;
-      background: #fff;
-    }
-    .progress {
-      width: 100%;
-      background: #ddd;
-      height: 20px;
-      border-radius: 10px;
-      margin: 10px 0;
-    }
-    .progress-bar {
-      height: 100%;
-      width: 0%;
-      background: #28a745;
-      color: white;
-      text-align: center;
-      border-radius: 10px;
-      transition: width 0.4s;
-    }
-    #logoutBtn {
-      background: red;
-      color: white;
-      padding: 5px 15px;
-      border: none;
-      float: right;
-      cursor: pointer;
-    }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Panel - Samuwa EducaNews</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
+  <script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
 </head>
-<body>
-  <button id="logoutBtn">Logout</button>
-  <h2>Admin Panel – Samuwa EducaNews</h2>
+<body class="bg-light">
+  <div class="container mt-4">
+    <h2 class="text-center mb-4">Samuwa EducaNews Admin</h2><div id="loginDiv">
+  <h5>Login</h5>
+  <input type="email" id="email" class="form-control mb-2" placeholder="Email" required />
+  <input type="password" id="password" class="form-control mb-2" placeholder="Password" required />
+  <button class="btn btn-primary" onclick="login()">Login</button>
+</div>
 
-  <!-- Login Form -->
-  <div id="loginForm">
-    <input type="email" id="email" placeholder="Email" /><br>
-    <input type="password" id="password" placeholder="Password" /><br>
-    <button onclick="login()">Login</button>
-  </div>
+<div id="editorDiv" style="display:none;">
+  <button class="btn btn-danger float-end" onclick="logout()">Logout</button>
+  <h5>Post Article</h5>
+  <input type="text" id="title" class="form-control mb-2" placeholder="Title" />
+  <input type="text" id="category" class="form-control mb-2" placeholder="Category" />
+  <textarea id="editor"></textarea>
+  <button class="btn btn-success mt-3" onclick="uploadArticle()">Upload</button>
+  <div class="mt-2" id="uploadStatus"></div>
+</div>
 
-  <!-- Admin Editor Form -->
-  <div id="editorForm" style="display:none;">
-    <input type="text" id="title" placeholder="Post Title" /><br>
-    <input type="text" id="category" placeholder="Category (e.g. News, Notes, Tips)" /><br>
-    <input type="file" id="file" /><br><br>
-
-    <div id="editor"></div><br>
-
-    <div class="progress">
-      <div class="progress-bar" id="progressBar">0%</div>
-    </div>
-
-    <button onclick="submitPost()">Upload Post</button>
-  </div>
-
-  <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
-
-  <!-- Quill Editor -->
-  <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
-
-  <script>
+  </div>  <script>
+    // Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyAwAxP-MWwNnKP59PA6joil4Ceq10eozlc",
       authDomain: "wafula-s-educational-posts.firebaseapp.com",
       projectId: "wafula-s-educational-posts",
-      storageBucket: "wafula-s-educational-posts.appspot.com"
+      storageBucket: "wafula-s-educational-posts.appspot.com",
+      messagingSenderId: "1040710248503",
+      appId: "1:1040710248503:web:87fbd02de2b919511577b2"
     };
 
     firebase.initializeApp(firebaseConfig);
@@ -98,92 +45,58 @@
     const db = firebase.firestore();
     const storage = firebase.storage();
 
-    const loginForm = document.getElementById("loginForm");
-    const editorForm = document.getElementById("editorForm");
-    const logoutBtn = document.getElementById("logoutBtn");
-
-    logoutBtn.onclick = () => auth.signOut();
-
-    auth.onAuthStateChanged(user => {
-      if (user) {
-        loginForm.style.display = "none";
-        editorForm.style.display = "block";
-      } else {
-        loginForm.style.display = "block";
-        editorForm.style.display = "none";
-      }
+    tinymce.init({
+      selector: '#editor',
+      plugins: 'image media link code lists',
+      toolbar: 'undo redo | styles | bold italic | alignleft aligncenter alignright alignjustify | bullist numlist | image media link | code',
+      height: 300
     });
 
     function login() {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
       auth.signInWithEmailAndPassword(email, password)
-        .catch(e => alert("Login failed: " + e.message));
+        .then(() => {
+          document.getElementById('loginDiv').style.display = 'none';
+          document.getElementById('editorDiv').style.display = 'block';
+        })
+        .catch(error => alert('Login failed: ' + error.message));
     }
 
-    const quill = new Quill('#editor', {
-      theme: 'snow',
-      placeholder: 'Write your content here...',
-      modules: {
-        toolbar: [
-          [{ header: [1, 2, 3, false] }],
-          ['bold', 'italic', 'underline', 'strike'],
-          [{ color: [] }, { background: [] }],
-          [{ list: 'ordered' }, { list: 'bullet' }],
-          [{ align: [] }],
-          ['link', 'image'],
-          ['clean']
-        ]
-      }
-    });
+    function logout() {
+      auth.signOut().then(() => location.reload());
+    }
 
-    function submitPost() {
-      const title = document.getElementById("title").value.trim();
-      const category = document.getElementById("category").value.trim();
-      const article = quill.root.innerHTML.trim();
-      const file = document.getElementById("file").files[0];
-      const timestamp = firebase.firestore.FieldValue.serverTimestamp();
-      const progressBar = document.getElementById("progressBar");
+    function uploadArticle() {
+      const title = document.getElementById('title').value.trim();
+      const category = document.getElementById('category').value.trim();
+      const content = tinymce.get('editor').getContent();
+      if (!title || !category || !content) return alert("Fill all fields");
 
-      if (!title || !category || !article) {
-        alert("Please fill in all required fields.");
-        return;
-      }
+      const htmlFile = new Blob([content], { type: 'text/html' });
+      const filename = `articles/${Date.now()}-${title.replace(/\s+/g, '_')}.html`;
+      const uploadTask = storage.ref().child(filename).put(htmlFile);
 
-      const saveToFirestore = (url = "") => {
-        db.collection("posts").add({
-          title,
-          category,
-          article,
-          url,
-          timestamp
-        }).then(() => {
-          alert("Post uploaded successfully!");
-          location.reload();
-        }).catch(e => {
-          alert("Failed to upload post: " + e.message);
-        });
-      };
-
-      if (file) {
-        const storageRef = storage.ref("uploads/" + Date.now() + "_" + file.name);
-        const uploadTask = storageRef.put(file);
-
-        uploadTask.on("state_changed", snapshot => {
-          const percent = Math.floor((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
-          progressBar.style.width = percent + "%";
-          progressBar.innerText = percent + "%";
-        }, error => {
-          alert("Upload error: " + error);
-        }, () => {
-          uploadTask.snapshot.ref.getDownloadURL().then(url => {
-            saveToFirestore(url);
+      uploadTask.on('state_changed', (snapshot) => {
+        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+        document.getElementById('uploadStatus').innerText = `Uploading... ${progress.toFixed(1)}%`;
+      }, (error) => {
+        alert('Upload failed: ' + error.message);
+      }, () => {
+        uploadTask.snapshot.ref.getDownloadURL().then(downloadURL => {
+          db.collection('articles').add({
+            title,
+            category,
+            url: downloadURL,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+          }).then(() => {
+            document.getElementById('uploadStatus').innerText = 'Upload successful!';
+            tinymce.get('editor').setContent('');
+            document.getElementById('title').value = '';
+            document.getElementById('category').value = '';
           });
         });
-      } else {
-        saveToFirestore(); // no file, just content
-      }
+      });
     }
-  </script>
-</body>
+  </script></body>
 </html>
