@@ -1,161 +1,172 @@
-<!DOCTYPE html>
-<html>
+<!DOCTYPE html><html lang="en">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Panel - Samuwa EducaNews</title>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
-  <script src="https://cdn.tiny.cloud/1/8s8goqpxlz92x5syaziw5j4j5muvw9kzicvz4vdbpgjenfqt/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
+  <script src="https://cdn.tiny.cloud/1/8s8goqpxlz92x5syaziw5j4j5muvw9kzicvz4vdbpgjenfqt/tinymce/7/tinymce.min.js" referrerpolicy="origin"></script>
+  <script>
+    tinymce.init({
+      selector: 'textarea#editor',
+      plugins: [
+        'anchor', 'autolink', 'charmap', 'codesample', 'emoticons', 'image', 'link', 'lists', 'media', 'searchreplace', 'table', 'visualblocks', 'wordcount',
+        'checklist', 'mediaembed', 'casechange', 'formatpainter', 'pageembed', 'a11ychecker', 'tinymcespellchecker', 'permanentpen', 'powerpaste', 'advtable',
+        'advcode', 'editimage', 'advtemplate', 'ai', 'mentions', 'tinycomments', 'tableofcontents', 'footnotes', 'mergetags', 'autocorrect', 'typography',
+        'inlinecss', 'markdown', 'importword', 'exportword', 'exportpdf'
+      ],
+      toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link image media table mergetags | addcomment showcomments | spellcheckdialog a11ycheck typography | align lineheight | checklist numlist bullist indent outdent | emoticons charmap | removeformat',
+      tinycomments_mode: 'embedded',
+      tinycomments_author: 'Admin',
+      mergetags_list: [
+        { value: 'First.Name', title: 'First Name' },
+        { value: 'Email', title: 'Email' }
+      ]
+    });
+  </script>
   <style>
     body {
       font-family: Arial, sans-serif;
-      margin: 40px;
-      background: #f5f5f5;
+      background-color: #f2f2f2;
+      padding: 20px;
     }
-    h2 {
-      font-family: "Times New Roman", serif;
+    .container {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      max-width: 800px;
+      margin: auto;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
-    .hidden { display: none; }
-    #progressDisplay { margin-top: 10px; font-weight: bold; }
+    h1 {
+      font-family: 'Times New Roman', serif;
+      color: white;
+      background: blue;
+      padding: 10px;
+      text-align: center;
+      border-radius: 4px;
+    }
+    input, textarea, select, button {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+    }
+    button {
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    #progress-bar {
+      height: 20px;
+      background-color: #e0e0e0;
+      border-radius: 5px;
+      margin-top: 10px;
+    }
+    #progress {
+      height: 100%;
+      background-color: #4caf50;
+      width: 0;
+      border-radius: 5px;
+      transition: width 0.3s;
+    }
   </style>
 </head>
 <body>
-
-  <h2>📝 Admin Panel - Samuwa EducaNews</h2>
-
-  <!-- Login Form -->
-  <div id="loginSection">
-    <h3>Login</h3>
-    <input type="email" id="email" placeholder="Email"><br><br>
-    <input type="password" id="password" placeholder="Password"><br><br>
+<div class="container">
+  <h1><b>Samuwa EducaNews Admin</b></h1>
+  <div id="auth-section">
+    <input type="email" id="email" placeholder="Email">
+    <input type="password" id="password" placeholder="Password">
     <button onclick="login()">Login</button>
   </div>
-
-  <!-- Editor Section -->
-  <div id="editorSection" class="hidden">
-    <button onclick="logout()">Logout</button>
-    <h3>Post Article</h3>
-    <input type="text" id="title" placeholder="Article Title"><br><br>
-    <input type="text" id="subtitle" placeholder="Subtitle"><br><br>
+  <div id="editor-section" style="display:none">
+    <input type="text" id="title" placeholder="Article Title">
     <select id="category">
       <option value="education">Education</option>
       <option value="news">News</option>
-      <option value="jobs">Jobs</option>
-      <option value="downloads">Downloads</option>
-    </select><br><br>
-    
-    <textarea id="editor"></textarea><br><br>
+      <option value="technology">Technology</option>
+    </select>
+    <textarea id="editor"></textarea>
+    <input type="file" id="thumbnail">
     <button onclick="uploadArticle()">Upload Article</button>
-    <div id="progressDisplay"></div>
+    <div id="progress-bar"><div id="progress"></div></div>
+    <button onclick="logout()">Logout</button>
   </div>
+</div><script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
+  import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-  <!-- Firebase Config -->
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyAwAxP-MWwNnKP59PA6joil4Ceq10eozlc",
-      authDomain: "wafula-s-educational-posts.firebaseapp.com",
-      projectId: "wafula-s-educational-posts",
-      storageBucket: "wafula-s-educational-posts.appspot.com",
-      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-      appId: "YOUR_APP_ID"
-    };
+  const firebaseConfig = {
+    apiKey: "AIzaSyAwAxP-MWwNnKP59PA6joil4Ceq10eozlc",
+    authDomain: "wafula-s-educational-posts.firebaseapp.com",
+    projectId: "wafula-s-educational-posts",
+    storageBucket: "wafula-s-educational-posts.appspot.com",
+    messagingSenderId: "YOUR_SENDER_ID",
+    appId: "YOUR_APP_ID"
+  };
 
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
-    const storage = firebase.storage();
-  </script>
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const storage = getStorage(app);
 
-  <!-- TinyMCE Init -->
-  <script>
-    tinymce.init({
-      selector: '#editor',
-      height: 400,
-      plugins: 'image media link code table lists',
-      toolbar: 'undo redo | bold italic underline | alignleft aligncenter alignright | bullist numlist | image media link | code',
-      automatic_uploads: true,
-      images_upload_handler: function (blobInfo, success, failure) {
-        const ref = storage.ref("images/" + blobInfo.filename());
-        const uploadTask = ref.put(blobInfo.blob());
+  const authSection = document.getElementById("auth-section");
+  const editorSection = document.getElementById("editor-section");
 
-        uploadTask.on('state_changed', null, failure, () => {
-          uploadTask.snapshot.ref.getDownloadURL().then(success);
-        });
-      }
-    });
-  </script>
-
-  <!-- Auth + Upload Logic -->
-  <script>
-    function login() {
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
-
-      auth.signInWithEmailAndPassword(email, password)
-        .then(() => {
-          document.getElementById("loginSection").style.display = "none";
-          document.getElementById("editorSection").style.display = "block";
-        })
-        .catch(err => alert("Login failed: " + err.message));
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      authSection.style.display = "none";
+      editorSection.style.display = "block";
+    } else {
+      authSection.style.display = "block";
+      editorSection.style.display = "none";
     }
+  });
 
-    function logout() {
-      auth.signOut().then(() => {
-        document.getElementById("loginSection").style.display = "block";
-        document.getElementById("editorSection").style.display = "none";
+  window.login = () => {
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+    signInWithEmailAndPassword(auth, email, password)
+      .then(() => alert("Login successful"))
+      .catch(err => alert("Login failed: " + err.message));
+  }
+
+  window.logout = () => {
+    signOut(auth);
+  }
+
+  window.uploadArticle = () => {
+    const title = document.getElementById("title").value;
+    const category = document.getElementById("category").value;
+    const content = tinymce.get("editor").getContent();
+    const file = document.getElementById("thumbnail").files[0];
+    if (!title || !category || !content || !file) return alert("All fields required");
+
+    const fileRef = ref(storage, 'thumbnails/' + file.name);
+    const uploadTask = uploadBytesResumable(fileRef, file);
+
+    uploadTask.on('state_changed', (snapshot) => {
+      const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+      document.getElementById("progress").style.width = progress + "%";
+    }, 
+    (error) => {
+      alert("Upload failed: " + error);
+    }, 
+    () => {
+      getDownloadURL(uploadTask.snapshot.ref).then((url) => {
+        addDoc(collection(db, "articles"), {
+          title,
+          category,
+          content,
+          thumbnail: url,
+          createdAt: serverTimestamp()
+        }).then(() => alert("Article uploaded successfully"))
+        .catch(err => alert("Upload failed: " + err.message));
       });
-    }
-
-    function uploadArticle() {
-      const title = document.getElementById('title').value.trim();
-      const subtitle = document.getElementById('subtitle').value.trim();
-      const category = document.getElementById('category').value;
-      const content = tinymce.get("editor").getContent();
-
-      if (!title || !content) {
-        alert("Title and content required");
-        return;
-      }
-
-      const id = Date.now().toString();
-      const blob = new Blob([content], { type: "text/html" });
-      const ref = storage.ref("articles/" + id + ".html");
-      const uploadTask = ref.put(blob);
-
-      uploadTask.on('state_changed',
-        (snap) => {
-          const percent = Math.round((snap.bytesTransferred / snap.totalBytes) * 100);
-          document.getElementById("progressDisplay").innerText = "Upload: " + percent + "%";
-        },
-        (err) => alert("Upload failed: " + err.message),
-        () => {
-          ref.getDownloadURL().then(url => {
-            db.collection("articles").doc(id).set({
-              id, title, subtitle, category, url,
-              timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            }).then(() => {
-              alert("Article uploaded!");
-              tinymce.get("editor").setContent('');
-              document.getElementById("progressDisplay").innerText = "";
-              document.getElementById("title").value = "";
-              document.getElementById("subtitle").value = "";
-            });
-          });
-        }
-      );
-    }
-
-    auth.onAuthStateChanged(user => {
-      if (user) {
-        document.getElementById("loginSection").style.display = "none";
-        document.getElementById("editorSection").style.display = "block";
-      } else {
-        document.getElementById("loginSection").style.display = "block";
-        document.getElementById("editorSection").style.display = "none";
-      }
     });
-  </script>
-
-</body>
+  }
+</script></body>
 </html>
