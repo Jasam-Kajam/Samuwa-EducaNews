@@ -2,122 +2,159 @@
 <html>
 <head>
   <title>Admin Panel</title>
-  <script type="module">
-    // Import Firebase modules
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
-    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
+  <meta charset="UTF-8">
+  <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+  <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-storage.js"></script>
+  <style>
+    body { font-family: sans-serif; padding: 20px; max-width: 800px; margin: auto; }
+    #editor-container { height: 300px; }
+    .hidden { display: none; }
+    #progress { margin-top: 10px; color: green; }
+  </style>
+</head>
+<body>
+  <h2>Admin Upload</h2>
 
-    // Your Firebase config
+  <div id="login">
+    <input type="email" id="email" placeholder="Email"><br><br>
+    <input type="password" id="password" placeholder="Password"><br><br>
+    <button onclick="login()">Login</button>
+  </div>
+
+  <div id="admin-panel" class="hidden">
+    <input type="text" id="title" placeholder="Title"><br><br>
+    <input type="text" id="category" placeholder="Category"><br><br>
+
+    <!-- Quill editor -->
+    <div id="toolbar">
+      <select class="ql-header"><option value="1"></option><option value="2"></option><option selected></option></select>
+      <button class="ql-bold"></button>
+      <button class="ql-italic"></button>
+      <button class="ql-underline"></button>
+      <button class="ql-image"></button>
+      <button class="ql-link"></button>
+      <button class="ql-list" value="ordered"></button>
+      <button class="ql-list" value="bullet"></button>
+    </div>
+    <div id="editor-container"></div><br>
+
+    <button onclick="uploadArticle()">Upload</button>
+    <button onclick="logout()">Logout</button>
+    <div id="progress"></div>
+  </div>
+
+  <script>
     const firebaseConfig = {
       apiKey: "AIzaSyAwAxP-MWwNnKP59PA6joil4Ceq10eozlc",
       authDomain: "wafula-s-educational-posts.firebaseapp.com",
       projectId: "wafula-s-educational-posts",
       storageBucket: "wafula-s-educational-posts.appspot.com",
-      messagingSenderId: "YOUR_ID",
-      appId: "YOUR_ID"
+      messagingSenderId: "your-id",
+      appId: "your-id"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const auth = getAuth(app);
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    const storage = firebase.storage();
 
-    // Wait for DOM load
-    window.addEventListener('DOMContentLoaded', () => {
-      const loginForm = document.getElementById('login-form');
-      const postForm = document.getElementById('post-form');
+    const loginDiv = document.getElementById('login');
+    const adminDiv = document.getElementById('admin-panel');
 
-      onAuthStateChanged(auth, user => {
-        if (user) {
-          loginForm.style.display = "none";
-          postForm.style.display = "block";
-        } else {
-          loginForm.style.display = "block";
-          postForm.style.display = "none";
-        }
-      });
-
-      // Login
-      document.getElementById('loginBtn').onclick = async () => {
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
-        try {
-          await signInWithEmailAndPassword(auth, email, password);
-          alert("Login successful");
-        } catch (e) {
-          alert("Login failed: " + e.message);
-        }
-      };
-
-      // Logout
-      document.getElementById('logoutBtn').onclick = async () => {
-        await signOut(auth);
-        alert("Logged out.");
-      };
-
-      // Quill setup
-      const quill = new Quill('#editor', {
-        theme: 'snow'
-      });
-
-      // Upload Article
-      document.getElementById('publishBtn').onclick = async () => {
-        const title = document.getElementById('title').value.trim();
-        const category = document.getElementById('category').value;
-        const content = quill.root.innerHTML.trim();
-
-        if (!title || !content) {
-          alert("Please enter title and content.");
-          return;
-        }
-
-        try {
-          await addDoc(collection(db, "articles"), {
-            title,
-            category,
-            content,
-            createdAt: serverTimestamp()
-          });
-          alert("Article uploaded!");
-          document.getElementById('title').value = "";
-          quill.root.innerHTML = "";
-        } catch (e) {
-          alert("Error uploading: " + e.message);
-        }
-      };
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        loginDiv.classList.add('hidden');
+        adminDiv.classList.remove('hidden');
+      } else {
+        loginDiv.classList.remove('hidden');
+        adminDiv.classList.add('hidden');
+      }
     });
+
+    function login() {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      auth.signInWithEmailAndPassword(email, password).catch(err => alert(err.message));
+    }
+
+    function logout() {
+      auth.signOut();
+    }
+
+    const quill = new Quill('#editor-container', {
+      modules: {
+        toolbar: {
+          container: "#toolbar",
+          handlers: {
+            image: function () {
+              const input = document.createElement('input');
+              input.setAttribute('type', 'file');
+              input.setAttribute('accept', 'image/*');
+              input.click();
+
+              input.onchange = () => {
+                const file = input.files[0];
+                if (file) {
+                  const ref = storage.ref('images/' + Date.now() + '-' + file.name);
+                  const uploadTask = ref.put(file);
+
+                  uploadTask.on('state_changed',
+                    snapshot => {
+                      const percent = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                      document.getElementById('progress').innerText = `Uploading image: ${Math.round(percent)}%`;
+                    },
+                    err => alert("Upload error: " + err),
+                    () => {
+                      uploadTask.snapshot.ref.getDownloadURL().then(url => {
+                        const range = quill.getSelection();
+                        quill.insertEmbed(range.index, 'image', url);
+                      });
+                    }
+                  );
+                }
+              };
+            }
+          }
+        }
+      },
+      theme: 'snow'
+    });
+
+    function uploadArticle() {
+      const title = document.getElementById('title').value;
+      const category = document.getElementById('category').value;
+      const content = quill.root.innerHTML;
+
+      if (!title || !category || content.length < 10) {
+        alert("Fill in all fields and write something.");
+        return;
+      }
+
+      if (content.length > 800000) {
+        alert("Content too long. Try splitting into parts.");
+        return;
+      }
+
+      document.getElementById('progress').innerText = "Uploading article...";
+
+      db.collection("articles").add({
+        title,
+        category,
+        content,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      }).then(() => {
+        document.getElementById('progress').innerText = "✅ Uploaded!";
+        document.getElementById('title').value = '';
+        document.getElementById('category').value = '';
+        quill.root.innerHTML = '';
+      }).catch(err => {
+        document.getElementById('progress').innerText = "❌ Failed: " + err.message;
+      });
+    }
   </script>
-
-  <!-- Quill -->
-  <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
-  <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
-
-  <style>
-    #editor { height: 300px; }
-    body { font-family: sans-serif; padding: 20px; }
-    input, select { width: 300px; padding: 8px; margin-bottom: 10px; }
-  </style>
-</head>
-<body>
-  <h2>Admin Panel</h2>
-
-  <!-- Login Form -->
-  <div id="login-form" style="display:none;">
-    <input id="email" type="email" placeholder="Admin Email"><br>
-    <input id="password" type="password" placeholder="Password"><br>
-    <button id="loginBtn">Login</button>
-  </div>
-
-  <!-- Post Form -->
-  <div id="post-form" style="display:none;">
-    <button id="logoutBtn">Logout</button><br><br>
-    <input id="title" placeholder="Article Title"><br>
-    <select id="category">
-      <option value="education">Education</option>
-      <option value="news">News</option>
-    </select><br>
-    <div id="editor"></div><br>
-    <button id="publishBtn">Publish</button>
-  </div>
 </body>
 </html>
