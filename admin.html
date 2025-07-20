@@ -12,25 +12,27 @@
 </head>
 <body class="bg-light">
   <div class="container mt-4">
-    <h2 class="text-center mb-4">Samuwa EducaNews Admin</h2><div id="loginDiv">
-  <h5>Login</h5>
-  <input type="email" id="email" class="form-control mb-2" placeholder="Email" required />
-  <input type="password" id="password" class="form-control mb-2" placeholder="Password" required />
-  <button class="btn btn-primary" onclick="login()">Login</button>
-</div>
+    <h2 class="text-center mb-4">Samuwa EducaNews Admin</h2>
 
-<div id="editorDiv" style="display:none;">
-  <button class="btn btn-danger float-end" onclick="logout()">Logout</button>
-  <h5>Post Article</h5>
-  <input type="text" id="title" class="form-control mb-2" placeholder="Title" />
-  <input type="text" id="category" class="form-control mb-2" placeholder="Category" />
-  <textarea id="editor"></textarea>
-  <button class="btn btn-success mt-3" onclick="uploadArticle()">Upload</button>
-  <div class="mt-2" id="uploadStatus"></div>
-</div>
+    <div id="loginDiv">
+      <h5>Login</h5>
+      <input type="email" id="email" class="form-control mb-2" placeholder="Email" required />
+      <input type="password" id="password" class="form-control mb-2" placeholder="Password" required />
+      <button class="btn btn-primary" onclick="login()">Login</button>
+    </div>
 
-  </div>  <script>
-    // Firebase Config
+    <div id="editorDiv" style="display:none;">
+      <button class="btn btn-danger float-end" onclick="logout()">Logout</button>
+      <h5>Post Article</h5>
+      <input type="text" id="title" class="form-control mb-2" placeholder="Title" />
+      <input type="text" id="category" class="form-control mb-2" placeholder="Category" />
+      <textarea id="editor"></textarea>
+      <button class="btn btn-success mt-3" onclick="uploadArticle()">Upload</button>
+      <div class="mt-2" id="uploadStatus"></div>
+    </div>
+  </div>
+
+  <script>
     const firebaseConfig = {
       apiKey: "AIzaSyAwAxP-MWwNnKP59PA6joil4Ceq10eozlc",
       authDomain: "wafula-s-educational-posts.firebaseapp.com",
@@ -52,14 +54,21 @@
       height: 300
     });
 
+    // Auth state check
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        document.getElementById('loginDiv').style.display = 'none';
+        document.getElementById('editorDiv').style.display = 'block';
+      } else {
+        document.getElementById('loginDiv').style.display = 'block';
+        document.getElementById('editorDiv').style.display = 'none';
+      }
+    });
+
     function login() {
       const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
       auth.signInWithEmailAndPassword(email, password)
-        .then(() => {
-          document.getElementById('loginDiv').style.display = 'none';
-          document.getElementById('editorDiv').style.display = 'block';
-        })
         .catch(error => alert('Login failed: ' + error.message));
     }
 
@@ -98,5 +107,6 @@
         });
       });
     }
-  </script></body>
+  </script>
+</body>
 </html>
