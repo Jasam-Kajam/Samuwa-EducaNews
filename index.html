@@ -1,114 +1,79 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Samuwa EducaNews</title>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+  <meta charset="UTF-8">
+  <title>Wafula Educational Posts</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js"></script>
   <style>
-    html, body {
+    body {
+      font-family: Arial, sans-serif;
       margin: 0;
-      padding: 0;
-      font-family: 'Roboto', sans-serif;
-      background: #f4f6f9;
+      padding: 1em;
       overflow-x: hidden;
+      background-color: white;
+      color: black;
+      transition: background-color 0.3s, color 0.3s;
     }
-
-    header {
-      background-color: #007bff;
-      padding: 20px;
-      text-align: center;
+    .dark-mode {
+      background-color: #121212;
+      color: #ddd;
     }
-
-    header h1 {
-      margin: 0;
-      font-family: 'Times New Roman', serif;
-      font-weight: bold;
-      font-size: 32px;
-      color: white;
-    }
-
-    .container {
-      max-width: 900px;
-      margin: 30px auto;
-      padding: 0 20px;
-    }
-
     .post-card {
-      background: #ffffff;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-      padding: 20px;
-      margin-bottom: 30px;
-      transition: transform 0.2s ease;
+      border-bottom: 1px solid #ccc;
+      padding: 1em 0;
+      margin-bottom: 1em;
     }
-
-    .post-card:hover {
-      transform: translateY(-3px);
-    }
-
     .post-title {
-      font-size: 24px;
-      font-family: 'Times New Roman', serif;
+      font-size: 1.3em;
       font-weight: bold;
-      color: #2e2e2e;
-      margin-bottom: 10px;
     }
-
-    .post-content, .post-full {
-      font-size: 16px;
-      line-height: 1.6;
-      color: #444;
-      white-space: normal;
-      margin-bottom: 15px;
-    }
-
     .read-more-link {
-      display: inline-block;
       color: #007bff;
       cursor: pointer;
       text-decoration: underline;
-      margin-top: 10px;
     }
-
-    iframe, video, img {
-      max-width: 100%;
-      border-radius: 8px;
-      margin-top: 10px;
-    }
-
-    a.download-link {
+    .download-link {
       display: inline-block;
       margin-top: 10px;
-      padding: 10px 15px;
-      background: #3498db;
+      color: #007bff;
+    }
+    .toggle-mode {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background: #007bff;
       color: white;
-      border-radius: 6px;
-      text-decoration: none;
+      border: none;
+      padding: 6px 10px;
+      cursor: pointer;
+      border-radius: 4px;
     }
-
-    a.download-link:hover {
-      background: #2980b9;
+    select {
+      margin-bottom: 1em;
+      padding: 0.5em;
+      font-size: 1em;
     }
-
-    footer a:hover {
-      text-decoration: underline;
-      color: #90caf9;
+    iframe, img, video {
+      max-width: 100%;
+      height: auto;
+      margin-top: 10px;
     }
   </style>
-
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
 </head>
 <body>
 
-  <header>
-    <h1>Samuwa EducaNews</h1>
-  </header>
+  <button class="toggle-mode" onclick="toggleMode()">Dark Mode</button>
 
-  <div class="container" id="contentArea"></div>
+  <h2>Wafula Educational Posts</h2>
+
+  <label for="categoryFilter">Filter by Category:</label>
+  <select id="categoryFilter">
+    <option value="All">All</option>
+  </select>
+
+  <div id="contentArea"></div>
 
   <script>
     const firebaseConfig = {
@@ -120,127 +85,108 @@
     const db = firebase.firestore();
 
     const contentArea = document.getElementById("contentArea");
+    const categoryFilter = document.getElementById("categoryFilter");
     const seenTitles = new Set();
+    const categorySet = new Set();
 
-    db.collection("posts").orderBy("timestamp", "desc").get().then((querySnapshot) => {
-      querySnapshot.forEach((doc) => {
+    function wordLimit(text, limit) {
+      return text.split(/\s+/).slice(0, limit).join(" ");
+    }
+
+    function createPostElement(post) {
+      const div = document.createElement("div");
+      div.className = "post-card";
+
+      const preview = wordLimit(post.article || "", 200);
+      const isLong = (post.article || "").split(/\s+/).length > 200;
+
+      let fullHTML = post.article
+        ?.split(/\n+/)
+        .filter(p => p.trim() !== "")
+        .map(p => `<p style="text-align: justify; margin-bottom: 1em;">${p.trim()}</p>`)
+        .join('') || "";
+
+      let html = `
+        <h3 class="post-title">${post.title}</h3>
+        ${post.category ? `<p><strong>${post.category}</strong></p>` : ""}
+        <div class="preview-text">${preview}${isLong ? "..." : ""}</div>
+        ${isLong ? `<a class="read-more-link">Read More</a>` : ""}
+        <div class="full-text" style="display:none;">${fullHTML}</div>
+      `;
+
+      if (post.url) {
+        const ext = post.url.split('.').pop().split('?')[0].toLowerCase();
+        if (ext === "pdf") {
+          html += `<iframe src="${post.url}" width="100%" height="400px"></iframe>`;
+        } else if (["jpg", "jpeg", "png", "gif"].includes(ext)) {
+          html += `<img src="${post.url}" alt="Image">`;
+        } else if (["mp4", "webm"].includes(ext)) {
+          html += `<video controls><source src="${post.url}" type="video/${ext}"></video>`;
+        } else {
+          html += `<a class="download-link" href="${post.url}" target="_blank">Download File</a>`;
+        }
+      }
+
+      div.innerHTML = html;
+      div.dataset.category = post.category || "Uncategorized";
+      return div;
+    }
+
+    function renderPosts(snapshot) {
+      contentArea.innerHTML = "";
+      seenTitles.clear();
+      categorySet.clear();
+      snapshot.forEach(doc => {
         const post = doc.data();
-        const titleKey = post.title?.trim().toLowerCase();
+        const titleKey = post.title?.toLowerCase().trim();
         if (!titleKey || seenTitles.has(titleKey)) return;
         seenTitles.add(titleKey);
+        if (post.category) categorySet.add(post.category);
 
-        const div = document.createElement("div");
-        div.className = "post-card";
-
-        const allWords = post.article ? post.article.split(/\s+/) : [];
-        const previewWords = allWords.slice(0, 200).join(' ');
-        const isLong = allWords.length > 200;
-
-        let fullContentHTML = "";
-        if (post.article) {
-          fullContentHTML = post.article
-            .split(/\n+/)
-            .filter(p => p.trim() !== "")
-            .map(p => `<p style="text-align: justify; font-family: Arial, sans-serif; margin-bottom: 1em;">${p.trim()}</p>`)
-            .join('');
-        }
-
-        let html = `
-          <h3 class="post-title">${post.title}</h3>
-          ${post.category ? `<p style="font-weight: bold; font-family: 'Times New Roman', serif;">${post.category}</p>` : ""}
-          <div class="post-content">${previewWords}${isLong ? "..." : ""}</div>
-          ${isLong ? `<span class="read-more-link">Read More</span>` : ""}
-          <div class="post-full" style="display:none;">${fullContentHTML}</div>
-        `;
-
-        if (post.url) {
-          const ext = post.url.split('.').pop().split('?')[0].toLowerCase();
-          if (ext === "pdf") {
-            html += `<iframe src="${post.url}" width="100%" height="400px"></iframe>`;
-          } else if (["jpg", "jpeg", "png", "gif"].includes(ext)) {
-            html += `<img src="${post.url}" alt="Image">`;
-          } else if (["mp4", "webm"].includes(ext)) {
-            html += `<video controls><source src="${post.url}" type="video/${ext}"></video>`;
-          } else {
-            html += `<a class="download-link" href="${post.url}" target="_blank">Download File</a>`;
-          }
-        }
-
-        div.innerHTML = html;
-        contentArea.appendChild(div);
+        const el = createPostElement(post);
+        contentArea.appendChild(el);
       });
 
+      // Populate category filter
+      categoryFilter.innerHTML = '<option value="All">All</option>';
+      [...categorySet].sort().forEach(cat => {
+        const opt = document.createElement("option");
+        opt.value = cat;
+        opt.textContent = cat;
+        categoryFilter.appendChild(opt);
+      });
+
+      // Attach read more logic
       document.querySelectorAll(".read-more-link").forEach(link => {
         link.addEventListener("click", function () {
-          const full = this.nextElementSibling;
           const preview = this.previousElementSibling;
-          if (full.style.display === "none" || full.style.display === "") {
-            full.style.display = "block";
-            preview.style.display = "none";
-            this.textContent = "Show Less";
-          } else {
-            full.style.display = "none";
-            preview.style.display = "block";
-            this.textContent = "Read More";
-          }
+          const full = this.nextElementSibling;
+          const isHidden = full.style.display === "none";
+          full.style.display = isHidden ? "block" : "none";
+          preview.style.display = isHidden ? "none" : "block";
+          this.textContent = isHidden ? "Show Less" : "Read More";
         });
       });
+    }
+
+    categoryFilter.addEventListener("change", () => {
+      const selected = categoryFilter.value;
+      document.querySelectorAll(".post-card").forEach(card => {
+        if (selected === "All" || card.dataset.category === selected) {
+          card.style.display = "block";
+        } else {
+          card.style.display = "none";
+        }
+      });
     });
-  </script>
 
-  <footer style="background-color: #0d47a1; color: white; padding: 40px 20px; font-family: Arial, sans-serif;">
-    <div style="display: flex; flex-wrap: wrap; justify-content: space-between; max-width: 1200px; margin: auto;">
-      
-      <div style="flex: 1; min-width: 200px; margin-bottom: 20px;">
-        <h3 style="font-family: 'Times New Roman', serif;">Samuwa EducaNews</h3>
-        <p>Empowering students, teachers, and readers with quality educational content and news updates.</p>
-      </div>
-      
-      <div style="flex: 1; min-width: 200px; margin-bottom: 20px;">
-        <h4>Quick Links</h4>
-        <ul style="list-style: none; padding: 0;">
-          <li><a href="#" style="color: white; text-decoration: none;">Home</a></li>
-          <li><a href="#" style="color: white; text-decoration: none;">Latest Articles</a></li>
-          <li><a href="#" style="color: white; text-decoration: none;">Categories</a></li>
-          <li><a href="#" style="color: white; text-decoration: none;">About Us</a></li>
-          <li><a href="#" style="color: white; text-decoration: none;">Contact</a></li>
-        </ul>
-      </div>
-      
-      <div style="flex: 1; min-width: 200px; margin-bottom: 20px;">
-        <h4>Newsletter</h4>
-        <p>Stay updated! Get the latest posts delivered to your inbox.</p>
-        <input type="email" placeholder="Your email" style="padding: 8px; width: 100%; border: none; border-radius: 4px; margin-bottom: 10px;" />
-        <button style="padding: 10px; width: 100%; background-color: #2196f3; color: white; border: none; border-radius: 4px;">Subscribe</button>
-      </div>
-      
-      <div style="flex: 1; min-width: 200px; margin-bottom: 20px;">
-        <h4>Follow Us</h4>
-        <p>
-          <a href="#" style="color: white; margin-right: 10px;">Facebook</a>
-          <a href="#" style="color: white; margin-right: 10px;">Twitter</a>
-          <a href="#" style="color: white;">YouTube</a>
-        </p>
-      </div>
-    </div>
+    db.collection("posts").orderBy("timestamp", "desc").get().then(renderPosts);
 
-    <hr style="border-color: rgba(255,255,255,0.2); margin: 20px 0;" />
-
-    <div style="text-align: center; font-size: 14px;">
-      &copy; 2025 Samuwa EducaNews. All rights reserved.
-    </div>
-  </footer>
-
-  <script>
-    document.querySelector('footer button').addEventListener('click', function () {
-      const email = document.querySelector('footer input[type="email"]').value.trim();
-      if (email === "") {
-        alert("Please enter your email address.");
-      } else {
-        alert("Thank you for subscribing! You'll receive updates to " + email);
-        document.querySelector('footer input[type="email"]').value = "";
-      }
-    });
+    function toggleMode() {
+      document.body.classList.toggle("dark-mode");
+      const btn = document.querySelector(".toggle-mode");
+      btn.textContent = document.body.classList.contains("dark-mode") ? "Light Mode" : "Dark Mode";
+    }
   </script>
 
 </body>
