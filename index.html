@@ -124,8 +124,8 @@ a.download-link:hover {
 
       const fullText = post.article || "";
       const words = fullText.split(/\s+/);
-      const preview = words.slice(0, 150).join(" ");
-      const isLong = words.length > 150;
+      const preview = words.slice(0, 100).join(" ");
+      const isLong = words.length > 100;
 
       const previewDiv = document.createElement("div");
       previewDiv.innerHTML = `<p>${preview}${isLong ? "..." : ""}</p>`;
