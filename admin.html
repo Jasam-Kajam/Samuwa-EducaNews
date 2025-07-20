@@ -107,6 +107,7 @@
       <option value="Video">Video</option>
       <option value="Image">Image</option>
       <option value="Article">Article</option>
+<option value="Donations">Donations</option>
     </select>
     <input type="text" id="searchTitle" placeholder="Search by title..." style="margin-left: 10px;">
     <div id="contentArea"></div>
@@ -156,7 +157,7 @@
       const file = fileInput.files[0];
       const articleText = quill.root.innerHTML.trim();
 
-      if (!title || (category !== "Article" && !file && !articleText)) {
+      if (!title || category || (category !== "Article" && !file && !articleText)) {
         uploadStatus.textContent = "Fill all required fields.";
         return;
       }
