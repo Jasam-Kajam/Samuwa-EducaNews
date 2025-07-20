@@ -13,11 +13,6 @@
       padding: 0;
     }
 
-  footer a:hover {
-    text-decoration: underline;
-    color: #90caf9;
-  }
-
     header {
       background-color: #007bff;
       padding: 20px;
@@ -67,6 +62,13 @@
       margin-bottom: 15px;
     }
 
+    .post-full {
+      display: none;
+      font-size: 16px;
+      line-height: 1.6;
+      color: #444;
+    }
+
     .post-media {
       margin: 15px 0;
     }
@@ -74,7 +76,7 @@
     iframe, video, img {
       max-width: 100%;
       border-radius: 8px;
-      margin-bottom: 10px;
+      margin-top: 10px;
     }
 
     a.download-link {
@@ -89,6 +91,21 @@
 
     a.download-link:hover {
       background: #2980b9;
+    }
+
+    .read-more-btn {
+      background: #007bff;
+      color: white;
+      padding: 8px 14px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+      color: #90caf9;
     }
   </style>
 
@@ -106,138 +123,138 @@
   <div class="container" id="contentArea"></div>
 
   <script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyAwAxP-MWwNnKP59PA6joil4Ceq10eozlc",
-    authDomain: "wafula-s-educational-posts.firebaseapp.com",
-    projectId: "wafula-s-educational-posts"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
+    const firebaseConfig = {
+      apiKey: "AIzaSyAwAxP-MWwNnKP59PA6joil4Ceq10eozlc",
+      authDomain: "wafula-s-educational-posts.firebaseapp.com",
+      projectId: "wafula-s-educational-posts"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
-  const contentArea = document.getElementById("contentArea");
+    const contentArea = document.getElementById("contentArea");
+    const seenTitles = new Set();
 
-  // Set to track seen titles
-  const seenTitles = new Set();
+    db.collection("posts").orderBy("timestamp", "desc").get().then((querySnapshot) => {
+      querySnapshot.forEach((doc) => {
+        const post = doc.data();
+        const titleKey = post.title?.trim().toLowerCase();
+        if (!titleKey || seenTitles.has(titleKey)) return;
+        seenTitles.add(titleKey);
 
-  db.collection("posts").orderBy("timestamp", "desc").get().then((querySnapshot) => {
-  querySnapshot.forEach((doc) => {
-    const post = doc.data();
+        const div = document.createElement("div");
+        div.className = "post-card";
 
-    if (seenTitles.has(post.title.trim().toLowerCase())) {
-      return;
-    }
-    seenTitles.add(post.title.trim().toLowerCase());
+        const previewText = post.article?.substring(0, 300) || "";
+        const isLong = post.article && post.article.length > 300;
 
-    const div = document.createElement("div");
-    div.className = "post-card";
+        let fullContentHTML = "";
+        if (post.article) {
+          fullContentHTML = post.article
+            .split(/\n+/)
+            .filter(p => p.trim() !== "")
+            .map(p => `<p style="text-align: justify; font-family: Arial, sans-serif; margin-bottom: 1em;">${p.trim()}</p>`)
+            .join('');
+        }
 
-    let fullContent = "";
-    if (post.article) {
-      fullContent = post.article
-        .split(/\n+/)
-        .filter(p => p.trim() !== '')
-        .map(p => `<p style="text-align: justify; font-family: Arial, sans-serif; margin-bottom: 1em;">${p.trim()}</p>`)
-        .join('');
-    }
+        let html = `
+          <h3 class="post-title">${post.title}</h3>
+          ${post.category ? `<p style="font-weight: bold; font-family: 'Times New Roman', serif;">${post.category}</p>` : ""}
+          <div class="post-content">
+            <p>${previewText}${isLong ? "..." : ""}</p>
+          </div>
+          ${isLong ? `<button class="read-more-btn">Read More</button>` : ""}
+          <div class="post-full">${fullContentHTML}</div>
+        `;
 
-    const previewText = post.article?.substring(0, 300) || "";
-    const isLong = post.article && post.article.length > 300;
+        if (post.url) {
+          const ext = post.url.split('.').pop().split('?')[0].toLowerCase();
+          if (ext === "pdf") {
+            html += `<iframe src="${post.url}" width="100%" height="400px"></iframe>`;
+          } else if (["jpg", "jpeg", "png", "gif"].includes(ext)) {
+            html += `<img src="${post.url}" alt="Image">`;
+          } else if (["mp4", "webm"].includes(ext)) {
+            html += `<video controls><source src="${post.url}" type="video/${ext}"></video>`;
+          } else {
+            html += `<a class="download-link" href="${post.url}" target="_blank">Download File</a>`;
+          }
+        }
 
-    let html = `
-      <h3 class="post-title">${post.title}</h3>
-      ${post.category ? `<p style="font-weight: bold; font-family: 'Times New Roman', serif;">${post.category}</p>` : ""}
-      <div class="post-content">
-        <p>${previewText}${isLong ? "..." : ""}</p>
+        div.innerHTML = html;
+        contentArea.appendChild(div);
+      });
+
+      document.querySelectorAll(".read-more-btn").forEach(button => {
+        button.addEventListener("click", function () {
+          const full = this.nextElementSibling;
+          const preview = this.previousElementSibling;
+          if (full.style.display === "none" || full.style.display === "") {
+            full.style.display = "block";
+            preview.style.display = "none";
+            this.textContent = "Show Less";
+          } else {
+            full.style.display = "none";
+            preview.style.display = "block";
+            this.textContent = "Read More";
+          }
+        });
+      });
+    });
+  </script>
+
+  <footer style="background-color: #0d47a1; color: white; padding: 40px 20px; font-family: Arial, sans-serif;">
+    <div style="display: flex; flex-wrap: wrap; justify-content: space-between; max-width: 1200px; margin: auto;">
+      
+      <div style="flex: 1; min-width: 200px; margin-bottom: 20px;">
+        <h3 style="font-family: 'Times New Roman', serif;">Samuwa EducaNews</h3>
+        <p>Empowering students, teachers, and readers with quality educational content and news updates.</p>
       </div>
-      ${isLong ? `<button class="read-more-btn" style="background:#007bff; color:white; padding:8px 14px; border:none; border-radius:4px; cursor:pointer;">Read More</button>` : ""}
-      <div class="post-full" style="display:none;">${fullContent}</div>
-    `;
+      
+      <div style="flex: 1; min-width: 200px; margin-bottom: 20px;">
+        <h4>Quick Links</h4>
+        <ul style="list-style: none; padding: 0;">
+          <li><a href="#" style="color: white; text-decoration: none;">Home</a></li>
+          <li><a href="#" style="color: white; text-decoration: none;">Latest Articles</a></li>
+          <li><a href="#" style="color: white; text-decoration: none;">Categories</a></li>
+          <li><a href="#" style="color: white; text-decoration: none;">About Us</a></li>
+          <li><a href="#" style="color: white; text-decoration: none;">Contact</a></li>
+        </ul>
+      </div>
+      
+      <div style="flex: 1; min-width: 200px; margin-bottom: 20px;">
+        <h4>Newsletter</h4>
+        <p>Stay updated! Get the latest posts delivered to your inbox.</p>
+        <input type="email" placeholder="Your email" style="padding: 8px; width: 100%; border: none; border-radius: 4px; margin-bottom: 10px;" />
+        <button style="padding: 10px; width: 100%; background-color: #2196f3; color: white; border: none; border-radius: 4px;">Subscribe</button>
+      </div>
+      
+      <div style="flex: 1; min-width: 200px; margin-bottom: 20px;">
+        <h4>Follow Us</h4>
+        <p>
+          <a href="#" style="color: white; margin-right: 10px;">Facebook</a>
+          <a href="#" style="color: white; margin-right: 10px;">Twitter</a>
+          <a href="#" style="color: white;">YouTube</a>
+        </p>
+      </div>
+    </div>
 
-    if (post.url) {
-      const ext = post.url.split('.').pop().split('?')[0].toLowerCase();
-      if (ext === "pdf") {
-        html += `<iframe src="${post.url}" width="100%" height="400px"></iframe>`;
-      } else if (["jpg", "png", "jpeg", "gif"].includes(ext)) {
-        html += `<img src="${post.url}" style="max-width:100%; margin-top:10px;">`;
-      } else if (["mp4", "webm"].includes(ext)) {
-        html += `<video controls width="100%" style="margin-top:10px;"><source src="${post.url}" type="video/${ext}"></video>`;
+    <hr style="border-color: rgba(255,255,255,0.2); margin: 20px 0;" />
+
+    <div style="text-align: center; font-size: 14px;">
+      &copy; 2025 Samuwa EducaNews. All rights reserved.
+    </div>
+  </footer>
+
+  <script>
+    document.querySelector('footer button').addEventListener('click', function () {
+      const email = document.querySelector('footer input[type="email"]').value.trim();
+      if (email === "") {
+        alert("Please enter your email address.");
       } else {
-        html += `<a class="download-link" href="${post.url}" target="_blank">Download File</a>`;
-      }
-    }
-
-    div.innerHTML = html;
-    contentArea.appendChild(div);
-  });
-
-  // Attach read more buttons after DOM is built
-  document.querySelectorAll(".read-more-btn").forEach(button => {
-    button.addEventListener("click", function () {
-      const full = this.nextElementSibling;
-      if (full.style.display === "none") {
-        full.style.display = "block";
-        this.textContent = "Show Less";
-      } else {
-        full.style.display = "none";
-        this.textContent = "Read More";
+        alert("Thank you for subscribing! You'll receive updates to " + email);
+        document.querySelector('footer input[type="email"]').value = "";
       }
     });
-  });
-});
-</script>
-<footer style="background-color: #0d47a1; color: white; padding: 40px 20px; font-family: Arial, sans-serif;">
-  <div style="display: flex; flex-wrap: wrap; justify-content: space-between; max-width: 1200px; margin: auto;">
-    
-    <div style="flex: 1; min-width: 200px; margin-bottom: 20px;">
-      <h3 style="font-family: 'Times New Roman', serif;">Samuwa EducaNews</h3>
-      <p>Empowering students, teachers, and readers with quality educational content and news updates.</p>
-    </div>
-    
-    <div style="flex: 1; min-width: 200px; margin-bottom: 20px;">
-      <h4>Quick Links</h4>
-      <ul style="list-style: none; padding: 0;">
-        <li><a href="#" style="color: white; text-decoration: none;">Home</a></li>
-        <li><a href="#" style="color: white; text-decoration: none;">Latest Articles</a></li>
-        <li><a href="#" style="color: white; text-decoration: none;">Categories</a></li>
-        <li><a href="#" style="color: white; text-decoration: none;">About Us</a></li>
-        <li><a href="#" style="color: white; text-decoration: none;">Contact</a></li>
-      </ul>
-    </div>
-    
-    <div style="flex: 1; min-width: 200px; margin-bottom: 20px;">
-      <h4>Newsletter</h4>
-      <p>Stay updated! Get the latest posts delivered to your inbox.</p>
-      <input type="email" placeholder="Your email" style="padding: 8px; width: 100%; border: none; border-radius: 4px; margin-bottom: 10px;" />
-      <button style="padding: 10px; width: 100%; background-color: #2196f3; color: white; border: none; border-radius: 4px;">Subscribe</button>
-    </div>
-    
-    <div style="flex: 1; min-width: 200px; margin-bottom: 20px;">
-      <h4>Follow Us</h4>
-      <p>
-        <a href="#" style="color: white; margin-right: 10px;">Facebook</a>
-        <a href="#" style="color: white; margin-right: 10px;">Twitter</a>
-        <a href="#" style="color: white;">YouTube</a>
-      </p>
-    </div>
-  </div>
+  </script>
 
-  <hr style="border-color: rgba(255,255,255,0.2); margin: 20px 0;" />
-
-  <div style="text-align: center; font-size: 14px;">
-    &copy; 2025 Samuwa EducaNews. All rights reserved.
-  </div>
-</footer>
-<script>
-  document.querySelector('footer button').addEventListener('click', function () {
-    const email = document.querySelector('footer input[type="email"]').value.trim();
-    if (email === "") {
-      alert("Please enter your email address.");
-    } else {
-      alert("Thank you for subscribing! You'll receive updates to " + email);
-      // You can also clear the field if you like:
-      document.querySelector('footer input[type="email"]').value = "";
-    }
-  });
-</script>
 </body>
 </html>
