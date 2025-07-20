@@ -1,86 +1,64 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
+  <title>All Articles</title>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Wafula Educational Posts</title>
+  <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js"></script>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 1rem;
-      background: #f8f9fa;
-    }
-    h1 {
-      text-align: center;
-    }
-    .article {
-      background: #fff;
-      margin: 1rem auto;
-      padding: 1rem;
-      border-radius: 10px;
-      box-shadow: 0 1px 5px rgba(0,0,0,0.1);
-      max-width: 700px;
-    }
-    .article-title {
-      font-size: 1.2rem;
-      color: #007bff;
-      text-decoration: none;
-    }
-    .article-preview {
-      color: #333;
-      margin-top: 0.5rem;
-    }
+    body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: auto; }
+    .article { border-bottom: 1px solid #ccc; padding: 10px 0; }
+    .article h3 { margin: 0; color: #2c3e50; }
+    .article p { color: #555; }
+    .article a { color: #2980b9; text-decoration: none; }
+    .article a:hover { text-decoration: underline; }
+    .category { font-size: 13px; color: #999; }
   </style>
 </head>
 <body>
+  <h1>Latest Articles</h1>
+  <div id="articles">Loading articles...</div>
 
-<h1>Wafula Educational Posts</h1>
-<div id="articles"></div>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyAwAxP-MWwNnKP59PA6joil4Ceq10eozlc",
+      authDomain: "wafula-s-educational-posts.firebaseapp.com",
+      projectId: "wafula-s-educational-posts",
+      storageBucket: "wafula-s-educational-posts.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
 
-<!-- Firebase SDKs -->
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
-<!-- Firebase Config -->
-<script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyAwAxP-MWwNnKP59PA6joil4Ceq10eozlc",
-    authDomain: "wafula-s-educational-posts.firebaseapp.com",
-    projectId: "wafula-s-educational-posts",
-    storageBucket: "wafula-s-educational-posts.appspot.com",
-    messagingSenderId: "YOUR_MESSAGING_ID",
-    appId: "YOUR_APP_ID"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
-</script>
+    const articlesDiv = document.getElementById("articles");
+    articlesDiv.innerHTML = "";
 
-<!-- Load Articles -->
-<script>
-  const container = document.getElementById('articles');
-  db.collection('articles').orderBy('timestamp', 'desc').get().then(snapshot => {
-    if (snapshot.empty) {
-      container.innerHTML = "<p>No articles found.</p>";
-      return;
-    }
-    snapshot.forEach(doc => {
-      const data = doc.data();
-      const preview = data.content.replace(/<[^>]+>/g, '').slice(0, 100) + '...';
-      const html = `
-        <div class="article">
-          <a class="article-title" href="article.html?id=${doc.id}">
-            ${data.title}
-          </a>
-          <p class="article-preview">${preview}</p>
-        </div>
-      `;
-      container.innerHTML += html;
-    });
-  }).catch(error => {
-    container.innerHTML = "<p>Error loading articles.</p>";
-    console.error(error);
-  });
-</script>
+    db.collection("articles").orderBy("createdAt", "desc").get()
+      .then(snapshot => {
+        if (snapshot.empty) {
+          articlesDiv.innerHTML = "<p>No articles found.</p>";
+          return;
+        }
 
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const shortPreview = data.content.replace(/<[^>]+>/g, '').slice(0, 150);
+
+          articlesDiv.innerHTML += `
+            <div class="article">
+              <span class="category">${data.category.toUpperCase()}</span>
+              <h3>${data.title}</h3>
+              <p>${shortPreview}...</p>
+              <a href="article.html?id=${doc.id}">Read More</a>
+            </div>
+          `;
+        });
+      })
+      .catch(error => {
+        articlesDiv.innerHTML = `<p>Error loading articles: ${error.message}</p>`;
+      });
+  </script>
 </body>
 </html>
