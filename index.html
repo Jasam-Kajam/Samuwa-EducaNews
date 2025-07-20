@@ -1,64 +1,226 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>All Articles</title>
   <meta charset="UTF-8" />
-  <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Samuwa EducaNews</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: auto; }
-    .article { border-bottom: 1px solid #ccc; padding: 10px 0; }
-    .article h3 { margin: 0; color: #2c3e50; }
-    .article p { color: #555; }
-    .article a { color: #2980b9; text-decoration: none; }
-    .article a:hover { text-decoration: underline; }
-    .category { font-size: 13px; color: #999; }
+    body {
+      margin: 0;
+      font-family: 'Roboto', sans-serif;
+      background: #f4f6f9;
+      padding: 0;
+    }
+
+  footer a:hover {
+    text-decoration: underline;
+    color: #90caf9;
+  }
+
+    header {
+      background-color: #007bff;
+      padding: 20px;
+      text-align: center;
+    }
+
+    header h1 {
+      margin: 0;
+      font-family: 'Times New Roman', serif;
+      font-weight: bold;
+      font-size: 32px;
+      color: white;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 30px auto;
+      padding: 0 20px;
+    }
+
+    .post-card {
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      padding: 20px;
+      margin-bottom: 30px;
+      transition: transform 0.2s ease;
+    }
+
+    .post-card:hover {
+      transform: translateY(-3px);
+    }
+
+    .post-title {
+      font-size: 24px;
+      font-family: 'Times New Roman', serif;
+      font-weight: bold;
+      color: #2e2e2e;
+      margin-bottom: 10px;
+    }
+
+    .post-content {
+      font-size: 16px;
+      line-height: 1.6;
+      color: #444;
+      white-space: pre-line;
+      margin-bottom: 15px;
+    }
+
+    .post-media {
+      margin: 15px 0;
+    }
+
+    iframe, video, img {
+      max-width: 100%;
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+
+    a.download-link {
+      display: inline-block;
+      margin-top: 10px;
+      padding: 10px 15px;
+      background: #3498db;
+      color: white;
+      border-radius: 6px;
+      text-decoration: none;
+    }
+
+    a.download-link:hover {
+      background: #2980b9;
+    }
   </style>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
 </head>
 <body>
-  <h1>Latest Articles</h1>
-  <div id="articles">Loading articles...</div>
+
+  <header>
+    <h1>Samuwa EducaNews</h1>
+  </header>
+
+  <div class="container" id="contentArea"></div>
 
   <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyAwAxP-MWwNnKP59PA6joil4Ceq10eozlc",
-      authDomain: "wafula-s-educational-posts.firebaseapp.com",
-      projectId: "wafula-s-educational-posts",
-      storageBucket: "wafula-s-educational-posts.appspot.com",
-      messagingSenderId: "YOUR_SENDER_ID",
-      appId: "YOUR_APP_ID"
-    };
+  const firebaseConfig = {
+    apiKey: "AIzaSyAwAxP-MWwNnKP59PA6joil4Ceq10eozlc",
+    authDomain: "wafula-s-educational-posts.firebaseapp.com",
+    projectId: "wafula-s-educational-posts"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
 
-    const app = firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+  const contentArea = document.getElementById("contentArea");
 
-    const articlesDiv = document.getElementById("articles");
-    articlesDiv.innerHTML = "";
+  // Set to track seen titles
+  const seenTitles = new Set();
 
-    db.collection("articles").orderBy("createdAt", "desc").get()
-      .then(snapshot => {
-        if (snapshot.empty) {
-          articlesDiv.innerHTML = "<p>No articles found.</p>";
-          return;
+  db.collection("posts").orderBy("timestamp", "desc").get().then((querySnapshot) => {
+    querySnapshot.forEach((doc) => {
+      const post = doc.data();
+
+      // ✅ Skip if this title was already shown
+      if (seenTitles.has(post.title.trim().toLowerCase())) {
+        return;
+      }
+      seenTitles.add(post.title.trim().toLowerCase());
+
+      const div = document.createElement("div");
+      div.style.border = "1px solid #ccc";
+      div.style.padding = "10px";
+      div.style.marginBottom = "15px";
+      div.style.backgroundColor = "#f9f9f9";
+      div.style.borderRadius = "8px";
+
+      let html = `<h3 style="font-family: 'Times New Roman', serif; font-weight: bold;">${post.title}</h3>`;
+      if (post.category) {
+        html += `<p style="font-family: 'Times New Roman', serif; font-weight: bold;">${post.category}</p>`;
+      }
+
+      if (post.article) {
+  const paragraphs = post.article
+    .split(/\n+/) // Split by one or more line breaks
+    .filter(p => p.trim() !== '') // Remove empty lines
+    .map(p => `<p style="text-align: justify; font-family: Arial, sans-serif; margin-bottom: 1em;">${p.trim()}</p>`)
+    .join('');
+  html += paragraphs;
+}
+
+      if (post.url) {
+        const ext = post.url.split('.').pop().split('?')[0].toLowerCase();
+        if (ext === "pdf") {
+          html += `<iframe src="${post.url}" width="100%" height="400px"></iframe>`;
+        } else if (["jpg", "png", "jpeg", "gif"].includes(ext)) {
+          html += `<img src="${post.url}" style="max-width:100%; margin-top:10px;">`;
+        } else if (["mp4", "webm"].includes(ext)) {
+          html += `<video controls width="100%" style="margin-top:10px;"><source src="${post.url}" type="video/${ext}"></video>`;
+        } else {
+          html += `<a href="${post.url}" target="_blank">Download File</a>`;
         }
+      }
 
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          const shortPreview = data.content.replace(/<[^>]+>/g, '').slice(0, 150);
+      div.innerHTML = html;
+      contentArea.appendChild(div);
+    }); 
+  });
+</script>
+<footer style="background-color: #0d47a1; color: white; padding: 40px 20px; font-family: Arial, sans-serif;">
+  <div style="display: flex; flex-wrap: wrap; justify-content: space-between; max-width: 1200px; margin: auto;">
+    
+    <div style="flex: 1; min-width: 200px; margin-bottom: 20px;">
+      <h3 style="font-family: 'Times New Roman', serif;">Samuwa EducaNews</h3>
+      <p>Empowering students, teachers, and readers with quality educational content and news updates.</p>
+    </div>
+    
+    <div style="flex: 1; min-width: 200px; margin-bottom: 20px;">
+      <h4>Quick Links</h4>
+      <ul style="list-style: none; padding: 0;">
+        <li><a href="#" style="color: white; text-decoration: none;">Home</a></li>
+        <li><a href="#" style="color: white; text-decoration: none;">Latest Articles</a></li>
+        <li><a href="#" style="color: white; text-decoration: none;">Categories</a></li>
+        <li><a href="#" style="color: white; text-decoration: none;">About Us</a></li>
+        <li><a href="#" style="color: white; text-decoration: none;">Contact</a></li>
+      </ul>
+    </div>
+    
+    <div style="flex: 1; min-width: 200px; margin-bottom: 20px;">
+      <h4>Newsletter</h4>
+      <p>Stay updated! Get the latest posts delivered to your inbox.</p>
+      <input type="email" placeholder="Your email" style="padding: 8px; width: 100%; border: none; border-radius: 4px; margin-bottom: 10px;" />
+      <button style="padding: 10px; width: 100%; background-color: #2196f3; color: white; border: none; border-radius: 4px;">Subscribe</button>
+    </div>
+    
+    <div style="flex: 1; min-width: 200px; margin-bottom: 20px;">
+      <h4>Follow Us</h4>
+      <p>
+        <a href="#" style="color: white; margin-right: 10px;">Facebook</a>
+        <a href="#" style="color: white; margin-right: 10px;">Twitter</a>
+        <a href="#" style="color: white;">YouTube</a>
+      </p>
+    </div>
+  </div>
 
-          articlesDiv.innerHTML += `
-            <div class="article">
-              <span class="category">${data.category.toUpperCase()}</span>
-              <h3>${data.title}</h3>
-              <p>${shortPreview}...</p>
-              <a href="article.html?id=${doc.id}">Read More</a>
-            </div>
-          `;
-        });
-      })
-      .catch(error => {
-        articlesDiv.innerHTML = `<p>Error loading articles: ${error.message}</p>`;
-      });
-  </script>
+  <hr style="border-color: rgba(255,255,255,0.2); margin: 20px 0;" />
+
+  <div style="text-align: center; font-size: 14px;">
+    &copy; 2025 Samuwa EducaNews. All rights reserved.
+  </div>
+</footer>
+<script>
+  document.querySelector('footer button').addEventListener('click', function () {
+    const email = document.querySelector('footer input[type="email"]').value.trim();
+    if (email === "") {
+      alert("Please enter your email address.");
+    } else {
+      alert("Thank you for subscribing! You'll receive updates to " + email);
+      // You can also clear the field if you like:
+      document.querySelector('footer input[type="email"]').value = "";
+    }
+  });
+</script>
 </body>
 </html>
