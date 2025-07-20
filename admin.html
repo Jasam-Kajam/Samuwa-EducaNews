@@ -12,6 +12,9 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>  
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>  
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>  
+<!-- Quill Editor CDN -->
+<link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+<script src="https://cdn.quilljs.com/1.3.7/quill.js"></script>
 </head>  
 <body>  
   <h1>Admin Panel</h1>    <!-- LOGIN SECTION -->    <div id="login-section">  
@@ -30,7 +33,7 @@
       <option value="Article">Article</option>  
     </select><br><br>  
     <input type="file" id="file"><br><br>  
-    <textarea id="articleText" placeholder="Write article content here (for articles only)"></textarea><br><br>  
+    <div id="editor" style="height: 200px;"></div><br><br>  
     <button id="uploadBtn">Upload</button>  
     <p id="uploadStatus"></p>  <hr>  
 <h2>Uploaded Posts</h2>  
@@ -88,7 +91,7 @@
       const category = document.getElementById("category").value;  
       const fileInput = document.getElementById("file");  
       const file = fileInput.files[0];  
-      const articleText = document.getElementById("articleText").value;  
+      const articleText = quill.root.innerHTML.trim(); 
   
       if (!title || !category || (category !== "Article" && !file && !articleText)) {  
         uploadStatus.textContent = "Fill all required fields.";  
@@ -172,5 +175,20 @@
   
     document.getElementById("categoryFilter").addEventListener("change", loadPosts);  
     document.getElementById("searchTitle").addEventListener("input", loadPosts);  
+
+const quill = new Quill('#editor', {
+  theme: 'snow',
+  placeholder: 'Write article content here (for articles only)',
+  modules: {
+    toolbar: [
+      [{ header: [1, 2, 3, false] }],
+      ['bold', 'italic', 'underline', 'strike'],
+      [{ list: 'ordered' }, { list: 'bullet' }],
+      ['blockquote', 'code-block'],
+      ['link', 'image', 'video'],
+      ['clean']
+    ]
+  }
+});
   </script>  </body>  
 </html>
