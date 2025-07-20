@@ -120,53 +120,70 @@
   const seenTitles = new Set();
 
   db.collection("posts").orderBy("timestamp", "desc").get().then((querySnapshot) => {
-    querySnapshot.forEach((doc) => {
-      const post = doc.data();
+  querySnapshot.forEach((doc) => {
+    const post = doc.data();
 
-      // ✅ Skip if this title was already shown
-      if (seenTitles.has(post.title.trim().toLowerCase())) {
-        return;
+    if (seenTitles.has(post.title.trim().toLowerCase())) {
+      return;
+    }
+    seenTitles.add(post.title.trim().toLowerCase());
+
+    const div = document.createElement("div");
+    div.className = "post-card";
+
+    let fullContent = "";
+    if (post.article) {
+      fullContent = post.article
+        .split(/\n+/)
+        .filter(p => p.trim() !== '')
+        .map(p => `<p style="text-align: justify; font-family: Arial, sans-serif; margin-bottom: 1em;">${p.trim()}</p>`)
+        .join('');
+    }
+
+    const previewText = post.article?.substring(0, 300) || "";
+    const isLong = post.article && post.article.length > 300;
+
+    let html = `
+      <h3 class="post-title">${post.title}</h3>
+      ${post.category ? `<p style="font-weight: bold; font-family: 'Times New Roman', serif;">${post.category}</p>` : ""}
+      <div class="post-content">
+        <p>${previewText}${isLong ? "..." : ""}</p>
+      </div>
+      ${isLong ? `<button class="read-more-btn" style="background:#007bff; color:white; padding:8px 14px; border:none; border-radius:4px; cursor:pointer;">Read More</button>` : ""}
+      <div class="post-full" style="display:none;">${fullContent}</div>
+    `;
+
+    if (post.url) {
+      const ext = post.url.split('.').pop().split('?')[0].toLowerCase();
+      if (ext === "pdf") {
+        html += `<iframe src="${post.url}" width="100%" height="400px"></iframe>`;
+      } else if (["jpg", "png", "jpeg", "gif"].includes(ext)) {
+        html += `<img src="${post.url}" style="max-width:100%; margin-top:10px;">`;
+      } else if (["mp4", "webm"].includes(ext)) {
+        html += `<video controls width="100%" style="margin-top:10px;"><source src="${post.url}" type="video/${ext}"></video>`;
+      } else {
+        html += `<a class="download-link" href="${post.url}" target="_blank">Download File</a>`;
       }
-      seenTitles.add(post.title.trim().toLowerCase());
+    }
 
-      const div = document.createElement("div");
-      div.style.border = "1px solid #ccc";
-      div.style.padding = "10px";
-      div.style.marginBottom = "15px";
-      div.style.backgroundColor = "#f9f9f9";
-      div.style.borderRadius = "8px";
-
-      let html = `<h3 style="font-family: 'Times New Roman', serif; font-weight: bold;">${post.title}</h3>`;
-      if (post.category) {
-        html += `<p style="font-family: 'Times New Roman', serif; font-weight: bold;">${post.category}</p>`;
-      }
-
-      if (post.article) {
-  const paragraphs = post.article
-    .split(/\n+/) // Split by one or more line breaks
-    .filter(p => p.trim() !== '') // Remove empty lines
-    .map(p => `<p style="text-align: justify; font-family: Arial, sans-serif; margin-bottom: 1em;">${p.trim()}</p>`)
-    .join('');
-  html += paragraphs;
-}
-
-      if (post.url) {
-        const ext = post.url.split('.').pop().split('?')[0].toLowerCase();
-        if (ext === "pdf") {
-          html += `<iframe src="${post.url}" width="100%" height="400px"></iframe>`;
-        } else if (["jpg", "png", "jpeg", "gif"].includes(ext)) {
-          html += `<img src="${post.url}" style="max-width:100%; margin-top:10px;">`;
-        } else if (["mp4", "webm"].includes(ext)) {
-          html += `<video controls width="100%" style="margin-top:10px;"><source src="${post.url}" type="video/${ext}"></video>`;
-        } else {
-          html += `<a href="${post.url}" target="_blank">Download File</a>`;
-        }
-      }
-
-      div.innerHTML = html;
-      contentArea.appendChild(div);
-    }); 
+    div.innerHTML = html;
+    contentArea.appendChild(div);
   });
+
+  // Attach read more buttons after DOM is built
+  document.querySelectorAll(".read-more-btn").forEach(button => {
+    button.addEventListener("click", function () {
+      const full = this.nextElementSibling;
+      if (full.style.display === "none") {
+        full.style.display = "block";
+        this.textContent = "Show Less";
+      } else {
+        full.style.display = "none";
+        this.textContent = "Read More";
+      }
+    });
+  });
+});
 </script>
 <footer style="background-color: #0d47a1; color: white; padding: 40px 20px; font-family: Arial, sans-serif;">
   <div style="display: flex; flex-wrap: wrap; justify-content: space-between; max-width: 1200px; margin: auto;">
