@@ -156,7 +156,7 @@
       const file = fileInput.files[0];
       const articleText = quill.root.innerHTML.trim();
 
-      if (!title || !category || (category !== "Article" && !file && !articleText)) {
+      if (!title || (category !== "Article" && !file && !articleText)) {
         uploadStatus.textContent = "Fill all required fields.";
         return;
       }
