@@ -7,187 +7,162 @@
   <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js"></script>
   <style>
-    body {
-      font-family: Arial, sans-serif;
+    * {
       margin: 0;
-      padding: 1em;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    html, body {
+      max-width: 100vw;
       overflow-x: hidden;
+      font-family: Arial, sans-serif;
       background-color: white;
-      color: black;
+      color: #111;
+      padding: 1rem;
       transition: background-color 0.3s, color 0.3s;
     }
     .dark-mode {
       background-color: #121212;
-      color: #ddd;
+      color: #eee;
     }
-    .post-card {
-      border-bottom: 1px solid #ccc;
-      padding: 1em 0;
-      margin-bottom: 1em;
+    .dark-mode a {
+      color: #90cdf4;
     }
-    .post-title {
-      font-size: 1.3em;
-      font-weight: bold;
-    }
-    .read-more-link {
-      color: #007bff;
-      cursor: pointer;
-      text-decoration: underline;
-    }
-    .download-link {
-      display: inline-block;
-      margin-top: 10px;
-      color: #007bff;
-    }
-    .toggle-mode {
+    #toggleMode {
       position: fixed;
       top: 10px;
       right: 10px;
+      padding: 8px 12px;
+      border: none;
       background: #007bff;
       color: white;
-      border: none;
-      padding: 6px 10px;
       cursor: pointer;
       border-radius: 4px;
+      z-index: 100;
     }
-    select {
-      margin-bottom: 1em;
-      padding: 0.5em;
-      font-size: 1em;
+    .post-card {
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      background-color: inherit;
+    }
+    .post-title {
+      font-size: 1.3rem;
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+    }
+    .read-more-link {
+      display: inline-block;
+      color: #007bff;
+      margin-top: 0.5rem;
+      text-decoration: underline;
+      cursor: pointer;
     }
     iframe, img, video {
-      max-width: 100%;
-      height: auto;
       margin-top: 10px;
+      max-width: 100%;
     }
   </style>
 </head>
 <body>
 
-  <button class="toggle-mode" onclick="toggleMode()">Dark Mode</button>
+<button id="toggleMode">🌙 Dark Mode</button>
 
-  <h2>Wafula Educational Posts</h2>
+<div id="contentArea"></div>
 
-  <label for="categoryFilter">Filter by Category:</label>
-  <select id="categoryFilter">
-    <option value="All">All</option>
-  </select>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyAwAxP-MWwNnKP59PA6joil4Ceq10eozlc",
+    authDomain: "wafula-s-educational-posts.firebaseapp.com",
+    projectId: "wafula-s-educational-posts"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
 
-  <div id="contentArea"></div>
+  const contentArea = document.getElementById("contentArea");
+  const seenTitles = new Set();
 
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyAwAxP-MWwNnKP59PA6joil4Ceq10eozlc",
-      authDomain: "wafula-s-educational-posts.firebaseapp.com",
-      projectId: "wafula-s-educational-posts"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+  function getFirstNWords(text, n) {
+    return text.split(/\s+/).slice(0, n).join(' ');
+  }
 
-    const contentArea = document.getElementById("contentArea");
-    const categoryFilter = document.getElementById("categoryFilter");
-    const seenTitles = new Set();
-    const categorySet = new Set();
+  db.collection("posts").orderBy("timestamp", "desc").get().then((querySnapshot) => {
+    querySnapshot.forEach((doc) => {
+      const post = doc.data();
+      const titleKey = post.title?.trim().toLowerCase();
+      if (!titleKey || seenTitles.has(titleKey)) return;
+      seenTitles.add(titleKey);
 
-    function wordLimit(text, limit) {
-      return text.split(/\s+/).slice(0, limit).join(" ");
-    }
-
-    function createPostElement(post) {
       const div = document.createElement("div");
       div.className = "post-card";
 
-      const preview = wordLimit(post.article || "", 200);
-      const isLong = (post.article || "").split(/\s+/).length > 200;
+      const fullText = post.article || "";
+      const previewText = getFirstNWords(fullText, 200);
+      const isLong = fullText.split(/\s+/).length > 200;
 
-      let fullHTML = post.article
-        ?.split(/\n+/)
+      const contentDiv = document.createElement("div");
+      contentDiv.innerHTML = `<p>${previewText}${isLong ? "..." : ""}</p>`;
+      contentDiv.className = "preview";
+
+      const fullDiv = document.createElement("div");
+      fullDiv.style.display = "none";
+      fullDiv.className = "full-article";
+      fullDiv.innerHTML = fullText
+        .split(/\n+/)
         .filter(p => p.trim() !== "")
         .map(p => `<p style="text-align: justify; margin-bottom: 1em;">${p.trim()}</p>`)
-        .join('') || "";
+        .join("");
 
-      let html = `
-        <h3 class="post-title">${post.title}</h3>
-        ${post.category ? `<p><strong>${post.category}</strong></p>` : ""}
-        <div class="preview-text">${preview}${isLong ? "..." : ""}</div>
-        ${isLong ? `<a class="read-more-link">Read More</a>` : ""}
-        <div class="full-text" style="display:none;">${fullHTML}</div>
-      `;
+      const toggleLink = document.createElement("a");
+      toggleLink.className = "read-more-link";
+      toggleLink.textContent = "Read More";
+      toggleLink.addEventListener("click", function () {
+        if (fullDiv.style.display === "none") {
+          fullDiv.style.display = "block";
+          contentDiv.style.display = "none";
+          toggleLink.textContent = "Show Less";
+        } else {
+          fullDiv.style.display = "none";
+          contentDiv.style.display = "block";
+          toggleLink.textContent = "Read More";
+        }
+      });
 
+      div.innerHTML = `<h3 class="post-title">${post.title}</h3>`;
+      if (post.category) {
+        div.innerHTML += `<p style="font-weight:bold;">${post.category}</p>`;
+      }
+
+      div.appendChild(contentDiv);
+      if (isLong) div.appendChild(toggleLink);
+      div.appendChild(fullDiv);
+
+      // Media display
       if (post.url) {
         const ext = post.url.split('.').pop().split('?')[0].toLowerCase();
         if (ext === "pdf") {
-          html += `<iframe src="${post.url}" width="100%" height="400px"></iframe>`;
+          div.innerHTML += `<iframe src="${post.url}" width="100%" height="400px"></iframe>`;
         } else if (["jpg", "jpeg", "png", "gif"].includes(ext)) {
-          html += `<img src="${post.url}" alt="Image">`;
+          div.innerHTML += `<img src="${post.url}">`;
         } else if (["mp4", "webm"].includes(ext)) {
-          html += `<video controls><source src="${post.url}" type="video/${ext}"></video>`;
+          div.innerHTML += `<video controls><source src="${post.url}" type="video/${ext}"></video>`;
         } else {
-          html += `<a class="download-link" href="${post.url}" target="_blank">Download File</a>`;
+          div.innerHTML += `<a href="${post.url}" target="_blank" class="read-more-link">Download</a>`;
         }
       }
 
-      div.innerHTML = html;
-      div.dataset.category = post.category || "Uncategorized";
-      return div;
-    }
-
-    function renderPosts(snapshot) {
-      contentArea.innerHTML = "";
-      seenTitles.clear();
-      categorySet.clear();
-      snapshot.forEach(doc => {
-        const post = doc.data();
-        const titleKey = post.title?.toLowerCase().trim();
-        if (!titleKey || seenTitles.has(titleKey)) return;
-        seenTitles.add(titleKey);
-        if (post.category) categorySet.add(post.category);
-
-        const el = createPostElement(post);
-        contentArea.appendChild(el);
-      });
-
-      // Populate category filter
-      categoryFilter.innerHTML = '<option value="All">All</option>';
-      [...categorySet].sort().forEach(cat => {
-        const opt = document.createElement("option");
-        opt.value = cat;
-        opt.textContent = cat;
-        categoryFilter.appendChild(opt);
-      });
-
-      // Attach read more logic
-      document.querySelectorAll(".read-more-link").forEach(link => {
-        link.addEventListener("click", function () {
-          const preview = this.previousElementSibling;
-          const full = this.nextElementSibling;
-          const isHidden = full.style.display === "none";
-          full.style.display = isHidden ? "block" : "none";
-          preview.style.display = isHidden ? "none" : "block";
-          this.textContent = isHidden ? "Show Less" : "Read More";
-        });
-      });
-    }
-
-    categoryFilter.addEventListener("change", () => {
-      const selected = categoryFilter.value;
-      document.querySelectorAll(".post-card").forEach(card => {
-        if (selected === "All" || card.dataset.category === selected) {
-          card.style.display = "block";
-        } else {
-          card.style.display = "none";
-        }
-      });
+      contentArea.appendChild(div);
     });
+  });
 
-    db.collection("posts").orderBy("timestamp", "desc").get().then(renderPosts);
-
-    function toggleMode() {
-      document.body.classList.toggle("dark-mode");
-      const btn = document.querySelector(".toggle-mode");
-      btn.textContent = document.body.classList.contains("dark-mode") ? "Light Mode" : "Dark Mode";
-    }
-  </script>
+  // Light/Dark mode toggle
+  const toggleBtn = document.getElementById("toggleMode");
+  toggleBtn.addEventListener("click", () => {
+    document.body.classList.toggle("dark-mode");
+    toggleBtn.textContent = document.body.classList.contains("dark-mode") ? "☀️ Light Mode" : "🌙 Dark Mode";
+  });
+</script>
 
 </body>
 </html>
