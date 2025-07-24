@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Contact Us – Samuwa EducaNews</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
   <style>
     body {
       font-family: 'Roboto', sans-serif;
@@ -61,20 +62,41 @@
 <body>
   <div class="container">
     <h2>Contact Samuwa EducaNews</h2>
-    <form action="mailto:weks254@gmail.com" method="post" enctype="text/plain">
-      <input type="text" name="name" placeholder="Your Name" required />
-      <input type="email" name="email" placeholder="Your Email" required />
-      <textarea name="message" placeholder="Your Message" rows="6" required></textarea>
+    <form onsubmit="return handleSubmit(event)">
+      <input type="text" name="name" placeholder="Your Name" id="name" required />
+      <input type="email" name="email" placeholder="Your Email" id="email" required />
+      <textarea name="message" placeholder="Your Message" rows="6" id="message" required></textarea>
+      <div class="g-recaptcha" data-sitekey="YOUR_SITE_KEY_HERE"></div>
       <button type="submit">Send Message</button>
     </form>
 
     <div class="contact-info">
       <strong>Email:</strong> info@samuwa-educanews.com  
-      <strong>Phone:</strong> +254 729 952 483  
+      <strong>Phone:</strong> +254 729 952 483 
       <strong>Address:</strong> Nairobi, Kenya  
       <strong>Follow us:</strong>  
       Facebook | Twitter | Instagram
     </div>
   </div>
+
+  <script>
+    function handleSubmit(e) {
+      e.preventDefault();
+
+      const name = document.getElementById('name').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const message = document.getElementById('message').value.trim();
+
+      if (!grecaptcha.getResponse()) {
+        alert("Please complete the reCAPTCHA.");
+        return false;
+      }
+
+      const mailto = `mailto:weks254@gmail.com?subject=Message from ${name}&body=Name ${name}%0AEmail ${email}%0AMessage ${message}`;
+      window.location.href = mailto;
+
+      return false;
+    }
+  </script>
 </body>
 </html>
