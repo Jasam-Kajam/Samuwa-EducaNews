@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Admin Panel - Wafula Posts</title>
+  <title>Admin Panel</title>
   <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
   <style>
     body {
@@ -14,105 +14,111 @@
     #editor {
       height: 250px;
       background: #fff;
+      margin-top: 10px;
     }
     input, select {
       width: 100%;
       padding: 10px;
       margin-top: 15px;
       border: 1px solid #ccc;
-      border-radius: 6px;
+      border-radius: 5px;
     }
     button {
+      margin-top: 20px;
       padding: 10px 20px;
-      margin-top: 15px;
-      background: #4caf50;
-      color: #fff;
+      background-color: #007bff;
+      color: white;
       border: none;
-      border-radius: 6px;
+      border-radius: 5px;
     }
   </style>
 </head>
 <body>
 
-<h2>Post Uploader</h2>
+  <h2>Post Uploader (Admin Panel)</h2>
 
-<input type="text" id="title" placeholder="Enter title" />
-<input type="url" id="videoUrl" placeholder="Optional Video URL" />
-<input type="url" id="imageUrl" placeholder="Optional Image URL" />
+  <input type="text" id="title" placeholder="Enter Title" />
+  <input type="url" id="imageUrl" placeholder="Optional Image URL" />
+  <input type="url" id="videoUrl" placeholder="Optional Video URL" />
 
-<select id="category">
-  <option value="News">News</option>
-  <option value="Blogs">Blogs</option>
-  <option value="Courses">Courses</option>
-  <option value="Funny">Funny</option>
-  <option value="Sports">Sports</option>
-  <option value="posts">posts</option>
-</select>
+  <select id="category">
+    <option value="News">News</option>
+    <option value="Blogs">Blogs</option>
+    <option value="Courses">Courses</option>
+    <option value="Funny">Funny</option>
+    <option value="Sports">Sports</option>
+    <option value="posts">posts</option>
+  </select>
 
-<div id="editor"></div>
-<button onclick="uploadPost()">Upload</button>
+  <div id="editor"></div>
 
-<!-- Quill + Firebase -->
-<script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  <button onclick="uploadPost()">Upload Post</button>
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyAwAxP-MWwNnKP59PA6joil4Ceq10eozlc",
-    authDomain: "wafula-s-educational-posts.firebaseapp.com",
-    projectId: "wafula-s-educational-posts",
-    storageBucket: "wafula-s-educational-posts.appspot.com",
-    messagingSenderId: "your-id",
-    appId: "your-app-id"
-  };
+  <!-- Firebase + Quill Scripts -->
+  <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-  const auth = getAuth(app);
+    const firebaseConfig = {
+      apiKey: "AIzaSyAwAxP-MWwNnKP59PA6joil4Ceq10eozlc",
+      authDomain: "wafula-s-educational-posts.firebaseapp.com",
+      projectId: "wafula-s-educational-posts",
+      storageBucket: "wafula-s-educational-posts.appspot.com",
+      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
 
-  const quill = new Quill('#editor', {
-    theme: 'snow'
-  });
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
 
-  onAuthStateChanged(auth, user => {
-    if (!user) {
-      alert("You must be logged in to access this page.");
-      window.location.href = "login.html"; // or your auth page
+    // Quill init
+    const quill = new Quill("#editor", {
+      theme: "snow"
+    });
+
+    // Only allow logged-in admins
+    onAuthStateChanged(auth, user => {
+      if (!user) {
+        alert("You must log in first.");
+        window.location.href = "login.html"; // redirect to login page
+      }
+    });
+
+    // Upload post
+    async function uploadPost() {
+      const title = document.getElementById("title").value.trim();
+      const imageUrl = document.getElementById("imageUrl").value.trim();
+      const videoUrl = document.getElementById("videoUrl").value.trim();
+      const category = document.getElementById("category").value;
+      const content = quill.root.innerHTML;
+
+      if (!title || !content) {
+        alert("Title and content are required.");
+        return;
+      }
+
+      try {
+        await addDoc(collection(db, category), {
+          title,
+          content,
+          imageUrl: imageUrl || null,
+          videoUrl: videoUrl || null,
+          timestamp: serverTimestamp()
+        });
+        alert("✅ Post uploaded successfully.");
+        // Reset form
+        document.getElementById("title").value = "";
+        document.getElementById("imageUrl").value = "";
+        document.getElementById("videoUrl").value = "";
+        quill.setContents([]);
+      } catch (err) {
+        console.error("Upload failed:", err);
+        alert("❌ Upload failed.");
+      }
     }
-  });
-
-  async function uploadPost() {
-    const title = document.getElementById("title").value;
-    const videoUrl = document.getElementById("videoUrl").value;
-    const imageUrl = document.getElementById("imageUrl").value;
-    const category = document.getElementById("category").value;
-    const content = quill.root.innerHTML;
-
-    if (!title || !category || !content) {
-      alert("All fields required.");
-      return;
-    }
-
-    try {
-      await addDoc(collection(db, category), {
-        title,
-        content,
-        videoUrl,
-        imageUrl,
-        timestamp: new Date().toISOString()
-      });
-      alert("Post uploaded!");
-      quill.setContents([]);
-      document.getElementById("title").value = "";
-      document.getElementById("videoUrl").value = "";
-      document.getElementById("imageUrl").value = "";
-    } catch (e) {
-      console.error("Upload failed:", e);
-      alert("Failed to upload.");
-    }
-  }
-</script>
+  </script>
 </body>
 </html>
