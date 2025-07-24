@@ -1,124 +1,128 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Admin Panel</title>
+
+  <!-- Quill Editor CSS -->
   <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
   <style>
     body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
       max-width: 800px;
       margin: auto;
-      padding: 20px;
-      font-family: Arial, sans-serif;
     }
     #editor {
       height: 250px;
-      background: #fff;
-      margin-top: 10px;
-    }
-    input, select {
-      width: 100%;
-      padding: 10px;
-      margin-top: 15px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-    }
-    button {
-      margin-top: 20px;
-      padding: 10px 20px;
-      background-color: #007bff;
-      color: white;
-      border: none;
-      border-radius: 5px;
     }
   </style>
 </head>
 <body>
+  <h2>Admin Upload Panel</h2>
 
-  <h2>Post Uploader (Admin Panel)</h2>
+  <label>Title:</label><br>
+  <input type="text" id="title" placeholder="Post title" style="width:100%; padding:8px;"><br><br>
 
-  <input type="text" id="title" placeholder="Enter Title" />
-  <input type="url" id="imageUrl" placeholder="Optional Image URL" />
-  <input type="url" id="videoUrl" placeholder="Optional Video URL" />
+  <label>Category:</label><br>
+  <select id="category" style="width:100%; padding:8px;">
+    <option value="news">News</option>
+    <option value="sports">Sports</option>
+    <option value="blogs">Blogs</option>
+    <option value="business">Business</option>
+    <option value="courses">Courses</option>
+    <option value="funny">Funny</option>
+  </select><br><br>
 
-  <select id="category">
-    <option value="News">News</option>
-    <option value="Blogs">Blogs</option>
-    <option value="Courses">Courses</option>
-    <option value="Funny">Funny</option>
-    <option value="Sports">Sports</option>
-    <option value="posts">posts</option>
-  </select>
+  <label>Media File (Image/Video):</label><br>
+  <input type="file" id="media"><br><br>
 
-  <div id="editor"></div>
+  <label>Content:</label>
+  <div id="editor"></div><br>
 
   <button onclick="uploadPost()">Upload Post</button>
 
-  <!-- Firebase + Quill Scripts -->
-  <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+  <!-- Firebase SDK -->
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
+    // ✅ Your Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyAwAxP-MWwNnKP59PA6joil4Ceq10eozlc",
       authDomain: "wafula-s-educational-posts.firebaseapp.com",
       projectId: "wafula-s-educational-posts",
       storageBucket: "wafula-s-educational-posts.appspot.com",
-      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+      messagingSenderId: "YOUR_MESSAGING_ID",
       appId: "YOUR_APP_ID"
     };
 
     const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
     const auth = getAuth(app);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
 
-    // Quill init
-    const quill = new Quill("#editor", {
-      theme: "snow"
+    // ✅ Quill Init
+    const quill = new Quill('#editor', {
+      theme: 'snow'
     });
 
-    // Only allow logged-in admins
+    // ✅ Auth check
     onAuthStateChanged(auth, user => {
       if (!user) {
-        alert("You must log in first.");
-        window.location.href = "login.html"; // redirect to login page
+        alert("Please log in first");
+        window.location.href = "login.html";
       }
     });
 
-    // Upload post
+    // ✅ Upload function
     async function uploadPost() {
       const title = document.getElementById("title").value.trim();
-      const imageUrl = document.getElementById("imageUrl").value.trim();
-      const videoUrl = document.getElementById("videoUrl").value.trim();
       const category = document.getElementById("category").value;
-      const content = quill.root.innerHTML;
+      const fileInput = document.getElementById("media");
+      const file = fileInput.files[0];
+      const content = quill.root.innerHTML.trim();
 
-      if (!title || !content) {
-        alert("Title and content are required.");
+      if (!title || !content || !file) {
+        alert("Please fill all fields and select a media file.");
         return;
       }
 
       try {
-        await addDoc(collection(db, category), {
+        // Upload file to Firebase Storage
+        const ext = file.name.split('.').pop();
+        const type = file.type.startsWith("video/") ? "video" : "image";
+        const filename = `${Date.now()}-${file.name}`;
+        const storageRef = ref(storage, `uploads/${filename}`);
+        await uploadBytes(storageRef, file);
+        const downloadURL = await getDownloadURL(storageRef);
+
+        // Save metadata to Firestore
+        await addDoc(collection(db, "posts"), {
           title,
+          category,
           content,
-          imageUrl: imageUrl || null,
-          videoUrl: videoUrl || null,
+          url: downloadURL,
+          type,
           timestamp: serverTimestamp()
         });
-        alert("✅ Post uploaded successfully.");
-        // Reset form
-        document.getElementById("title").value = "";
-        document.getElementById("imageUrl").value = "";
-        document.getElementById("videoUrl").value = "";
-        quill.setContents([]);
-      } catch (err) {
-        console.error("Upload failed:", err);
-        alert("❌ Upload failed.");
+
+        alert("Post uploaded successfully!");
+        location.reload();
+      } catch (error) {
+        console.error("Upload failed:", error);
+        alert("Upload failed. See console for details.");
       }
     }
+
+    // ✅ Make function accessible to onclick
+    window.uploadPost = uploadPost;
   </script>
+
+  <!-- Quill JS -->
+  <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
 </body>
 </html>
