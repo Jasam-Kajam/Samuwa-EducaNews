@@ -1,99 +1,68 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Post View</title>
+  <title>Posts</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-      max-width: 900px;
-      margin: auto;
-      overflow-x: hidden;
-      background: #f9f9f9;
-    }
-
-    h1 {
-      font-size: 28px;
-      color: #333;
-    }
-
-    .content {
-      background: #fff;
-      padding: 20px;
-      border-radius: 14px;
-      box-shadow: 0 0 8px rgba(0,0,0,0.1);
-      margin-top: 20px;
-      line-height: 1.8;
-    }
-
-    img, video {
-      max-width: 100%;
-      height: auto;
-      display: block;
-      margin: 15px 0;
-    }
+    body { font-family: Arial; max-width: 900px; margin: auto; }
+    .post { border-bottom: 1px solid #ccc; padding: 20px 0; }
+    .post img, .post video { max-width: 100%; margin-top: 10px; }
   </style>
 </head>
 <body>
+  <h1>All Posts</h1>
+  <div id="postsContainer">Loading...</div>
 
-  <h1 id="postTitle">Loading...</h1>
-  <div class="content" id="postContent"></div>
+  <!-- Firebase -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, collectionGroup, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-  <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-
-  <script>
-    // Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyAwAxP-MWwNnKP59PA6joil4Ceq10eozlc",
       authDomain: "wafula-s-educational-posts.firebaseapp.com",
       projectId: "wafula-s-educational-posts",
-      storageBucket: "wafula-s-educational-posts.firebasestorage.app",
-      messagingSenderId: "YOUR_SENDER_ID",
+      storageBucket: "wafula-s-educational-posts.appspot.com",
+      messagingSenderId: "YOUR_MESSAGING_ID",
       appId: "YOUR_APP_ID"
     };
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-    const auth = firebase.auth();
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
 
-    // Wait for user login
-    auth.onAuthStateChanged(user => {
-      if (user) {
-        loadPost(); // If logged in, show content
-      } else {
-        alert("Please log in to view this post.");
-        window.location.href = "/login.html"; // Redirect if not logged in
-      }
-    });
+    const container = document.getElementById("postsContainer");
 
-    function loadPost() {
-      const params = new URLSearchParams(window.location.search);
-      const postId = params.get("id");
-
-      if (!postId) {
-        document.getElementById("postTitle").textContent = "No post ID provided.";
+    // Show posts after login
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        container.innerHTML = "<p>Please log in to view posts.</p>";
         return;
       }
 
-      db.collection("posts").doc(postId).get().then(doc => {
-        if (doc.exists) {
-          const data = doc.data();
-          document.getElementById("postTitle").textContent = data.title;
-          document.getElementById("postContent").innerHTML = data.content;
-        } else {
-          document.getElementById("postTitle").textContent = "Post not found.";
-        }
-      }).catch(error => {
-        document.getElementById("postTitle").textContent = "Error loading post.";
-        console.error(error);
-      });
-    }
-  </script>
+      container.innerHTML = ""; // Clear loading
+      const querySnapshot = await getDocs(collectionGroup(db, "posts")); // All categories
 
+      if (querySnapshot.empty) {
+        container.innerHTML = "<p>No posts found.</p>";
+      }
+
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        const post = document.createElement("div");
+        post.className = "post";
+
+        post.innerHTML = `
+          <h3>${data.title || "Untitled"}</h3>
+          <p>${data.content?.slice(0, 200)}...</p>
+          ${data.imageURL ? `<img src="${data.imageURL}">` : ""}
+          ${data.videoURL ? `<video controls src="${data.videoURL}"></video>` : ""}
+          <p><strong>Category:</strong> ${doc.ref.parent.parent?.id || "Unknown"}</p>
+        `;
+
+        container.appendChild(post);
+      });
+    });
+  </script>
 </body>
 </html>
