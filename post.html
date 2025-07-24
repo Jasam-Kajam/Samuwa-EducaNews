@@ -1,68 +1,92 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Posts</title>
+  <meta charset="UTF-8" />
+  <title>View Post</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
-    body { font-family: Arial; max-width: 900px; margin: auto; }
-    .post { border-bottom: 1px solid #ccc; padding: 20px 0; }
-    .post img, .post video { max-width: 100%; margin-top: 10px; }
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: auto;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    h1 {
+      color: #333;
+    }
+    .post-meta {
+      color: #777;
+      font-size: 0.9em;
+      margin-bottom: 10px;
+    }
+    iframe, img, video {
+      max-width: 100%;
+      height: auto;
+      margin-top: 15px;
+    }
   </style>
-</head>
-<body>
-  <h1>All Posts</h1>
-  <div id="postsContainer">Loading...</div>
 
   <!-- Firebase -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getFirestore, collectionGroup, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+</head>
 
+<body>
+  <h1 id="postTitle">Loading...</h1>
+  <p class="post-meta" id="postCategory"></p>
+  <div id="postContent"></div>
+
+  <script>
     const firebaseConfig = {
       apiKey: "AIzaSyAwAxP-MWwNnKP59PA6joil4Ceq10eozlc",
       authDomain: "wafula-s-educational-posts.firebaseapp.com",
       projectId: "wafula-s-educational-posts",
       storageBucket: "wafula-s-educational-posts.appspot.com",
-      messagingSenderId: "YOUR_MESSAGING_ID",
-      appId: "YOUR_APP_ID"
+      messagingSenderId: "your-id",
+      appId: "your-id"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const auth = getAuth(app);
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
-    const container = document.getElementById("postsContainer");
+    // Get post ID from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const postId = urlParams.get("id");
 
-    // Show posts after login
-    onAuthStateChanged(auth, async (user) => {
-      if (!user) {
-        container.innerHTML = "<p>Please log in to view posts.</p>";
-        return;
-      }
+    if (!postId) {
+      document.getElementById("postTitle").textContent = "No post ID provided.";
+    } else {
+      db.collection("posts").doc(postId).get().then(doc => {
+        if (doc.exists) {
+          const post = doc.data();
+          document.getElementById("postTitle").textContent = post.title;
+          document.getElementById("postCategory").textContent = "Category: " + post.category;
 
-      container.innerHTML = ""; // Clear loading
-      const querySnapshot = await getDocs(collectionGroup(db, "posts")); // All categories
+          let html = post.article || "";
 
-      if (querySnapshot.empty) {
-        container.innerHTML = "<p>No posts found.</p>";
-      }
+          if (post.url) {
+            const ext = post.url.split('.').pop().split('?')[0].toLowerCase();
+            if (ext === "pdf") {
+              html += `<iframe src="${post.url}" height="400"></iframe>`;
+            } else if (["jpg", "jpeg", "png", "gif"].includes(ext)) {
+              html += `<img src="${post.url}" alt="Image">`;
+            } else if (["mp4", "webm"].includes(ext)) {
+              html += `<video controls><source src="${post.url}" type="video/${ext}"></video>`;
+            } else {
+              html += `<p><a href="${post.url}" target="_blank">Download File</a></p>`;
+            }
+          }
 
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        const post = document.createElement("div");
-        post.className = "post";
-
-        post.innerHTML = `
-          <h3>${data.title || "Untitled"}</h3>
-          <p>${data.content?.slice(0, 200)}...</p>
-          ${data.imageURL ? `<img src="${data.imageURL}">` : ""}
-          ${data.videoURL ? `<video controls src="${data.videoURL}"></video>` : ""}
-          <p><strong>Category:</strong> ${doc.ref.parent.parent?.id || "Unknown"}</p>
-        `;
-
-        container.appendChild(post);
+          document.getElementById("postContent").innerHTML = html;
+        } else {
+          document.getElementById("postTitle").textContent = "Post not found.";
+        }
+      }).catch(error => {
+        document.getElementById("postTitle").textContent = "Error loading post.";
+        console.error(error);
       });
-    });
+    }
   </script>
 </body>
 </html>
