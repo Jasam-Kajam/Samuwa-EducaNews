@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Post View</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      max-width: 900px;
+      margin: auto;
+      overflow-x: hidden;
+      background: #f9f9f9;
+    }
+
+    h1 {
+      font-size: 28px;
+      color: #333;
+    }
+
+    .content {
+      background: #fff;
+      padding: 20px;
+      border-radius: 14px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.1);
+      margin-top: 20px;
+      line-height: 1.8;
+    }
+
+    img, video {
+      max-width: 100%;
+      height: auto;
+      display: block;
+      margin: 15px 0;
+    }
+  </style>
+</head>
+<body>
+
+  <h1 id="postTitle">Loading...</h1>
+  <div class="content" id="postContent"></div>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+
+  <script>
+    // Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyAwAxP-MWwNnKP59PA6joil4Ceq10eozlc",
+      authDomain: "wafula-s-educational-posts.firebaseapp.com",
+      projectId: "wafula-s-educational-posts",
+      storageBucket: "wafula-s-educational-posts.firebasestorage.app",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+
+    // Wait for user login
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        loadPost(); // If logged in, show content
+      } else {
+        alert("Please log in to view this post.");
+        window.location.href = "/login.html"; // Redirect if not logged in
+      }
+    });
+
+    function loadPost() {
+      const params = new URLSearchParams(window.location.search);
+      const postId = params.get("id");
+
+      if (!postId) {
+        document.getElementById("postTitle").textContent = "No post ID provided.";
+        return;
+      }
+
+      db.collection("posts").doc(postId).get().then(doc => {
+        if (doc.exists) {
+          const data = doc.data();
+          document.getElementById("postTitle").textContent = data.title;
+          document.getElementById("postContent").innerHTML = data.content;
+        } else {
+          document.getElementById("postTitle").textContent = "Post not found.";
+        }
+      }).catch(error => {
+        document.getElementById("postTitle").textContent = "Error loading post.";
+        console.error(error);
+      });
+    }
+  </script>
+
+</body>
+</html>
