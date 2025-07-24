@@ -171,47 +171,38 @@
     });
 
     async function uploadHandler() {
-      const title = document.getElementById("title").value;
-      const category = document.getElementById("category").value;
-      const fileInput = document.getElementById("file");
-      const file = fileInput.files[0];
-      const articleText = quill.root.innerHTML.trim();
+  const title = document.getElementById("title").value.trim();
+  const category = document.getElementById("category").value;
+  const articleText = quill.root.innerHTML.trim();
 
-      if (!title || !category || (category === "Article" && !articleText && !file)) {
-        uploadStatus.textContent = "Fill all required fields.";
-        return;
-      }
+  if (!title || !category || !articleText) {
+    uploadStatus.textContent = "Please fill in title, category, and content.";
+    return;
+  }
 
-      uploadStatus.textContent = "Uploading...";
+  uploadStatus.textContent = "Uploading...";
 
-      try {
-        let fileURL = "";
-        if (file) {
-          const ref = storage.ref(`uploads/${Date.now()}_${file.name}`);
-          await ref.put(file);
-          fileURL = await ref.getDownloadURL();
-        }
+  try {
+    await db.collection("posts").add({
+      title,
+      category,
+      article: articleText,
+      url: "", // Optional placeholder if you plan to support media later
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    });
 
-        await db.collection("posts").add({
-          title,
-          category,
-          url: fileURL,
-          article: category === "Article" ? articleText : "",
-          timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        });
-
-        uploadStatus.textContent = "Upload successful!";
-        document.getElementById("title").value = "";
-        document.getElementById("category").value = "";
-        fileInput.value = "";
-        quill.root.innerHTML = "";
-        uploadBtn.textContent = "Upload";
-        uploadBtn.onclick = uploadHandler;
-        loadPosts();
-      } catch (err) {
-        uploadStatus.textContent = "Upload failed: " + err.message;
-      }
-    }
+    uploadStatus.textContent = "Post uploaded successfully!";
+    document.getElementById("title").value = "";
+    document.getElementById("category").value = "";
+    quill.root.innerHTML = "";
+    uploadBtn.textContent = "Upload";
+    uploadBtn.onclick = uploadHandler;
+    loadPosts();
+  } catch (err) {
+    console.error(err);
+    uploadStatus.textContent = "Upload failed: " + err.message;
+  }
+}
 
     function loadPosts() {
       const contentArea = document.getElementById("contentArea");
