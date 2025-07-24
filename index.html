@@ -243,5 +243,71 @@ footer a:hover {
       }
     }
   </script>
+document.addEventListener("DOMContentLoaded", function () { const postContainer = document.getElementById("postContainer");
+
+db.collection("posts").orderBy("timestamp", "desc").get().then((querySnapshot) => { const categorized = { news: [], sports: [], blogs: [], business: [], courses: [], funny: [] };
+
+querySnapshot.forEach((doc) => {
+  const data = doc.data();
+  const category = data.category || "news";
+  categorized[category].push({ id: doc.id, ...data });
+});
+
+for (const [category, posts] of Object.entries(categorized)) {
+  if (posts.length === 0) continue;
+
+  const section = document.createElement("section");
+  section.id = category;
+
+  const heading = document.createElement("h2");
+  heading.textContent = category.charAt(0).toUpperCase() + category.slice(1);
+  heading.className = "category-heading";
+  section.appendChild(heading);
+
+  posts.forEach((post) => {
+    const div = document.createElement("div");
+    div.className = "post";
+
+    const title = document.createElement("h3");
+    title.textContent = post.title;
+
+    const previewDiv = document.createElement("div");
+    previewDiv.innerHTML = post.content.substring(0, 150) + "...";
+    previewDiv.className = "preview";
+
+    const fullDiv = document.createElement("div");
+    fullDiv.innerHTML = post.content;
+    fullDiv.style.display = "none";
+    fullDiv.className = "full-content";
+
+    const toggleLink = document.createElement("a");
+    toggleLink.href = "javascript:void(0)";
+    toggleLink.textContent = "Read More";
+    toggleLink.className = "read-more";
+
+    toggleLink.addEventListener("click", function () {
+      const isVisible = fullDiv.style.display === "block";
+      fullDiv.style.display = isVisible ? "none" : "block";
+      previewDiv.style.display = isVisible ? "block" : "none";
+      toggleLink.textContent = isVisible ? "Read More" : "Show Less";
+
+      if (!isVisible) {
+        div.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    });
+
+    div.appendChild(title);
+    div.appendChild(previewDiv);
+    div.appendChild(fullDiv);
+    div.appendChild(toggleLink);
+    section.appendChild(div);
+  });
+
+  postContainer.appendChild(section);
+}
+
+    }); 
+  });
+</script>
 </body>
 </html>
