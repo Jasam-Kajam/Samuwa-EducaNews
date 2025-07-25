@@ -85,9 +85,49 @@
       <button onclick="unlockPDF('dl2', '18_leQsYHz4SXhYv7m86eyY_LNzA38MqL')">Thank you for your generous support. Your donation helps us continue our work and make a positive impact.</button>
 </section>
 
-<footer>
-  &copy; 2025 All Rights Reserved
-</footer>
-
+<footer style="background-color: #0d47a1; color: white; padding: 40px 20px; font-family: Arial, sans-serif;">
+    <div style="display: flex; flex-wrap: wrap; justify-content: space-between; max-width: 1200px; margin: auto;">
+      <div style="flex: 1; min-width: 200px;">
+        <h3 style="font-family: 'Times New Roman', serif;">Samuwa EducaNews</h3>
+        <p>Empowering students, teachers, and readers with quality educational content and news updates.</p>
+      </div>
+      <div style="flex: 1; min-width: 200px;">
+        <h4>Quick Links</h4>
+        <ul style="list-style: none; padding: 0;">
+          <li><a href="index.html" style="color: white; text-decoration: none;">Home</a></li>
+          <li><a href="article.html" style="color: white; text-decoration: none;">Latest Articles</a></li>
+          <li><a href="#" style="color: white; text-decoration: none;">Categories</a></li>
+          <li><a href="about.html" style="color: white; text-decoration: none;">About Us</a></li>
+          <li><a href="contac.html" style="color: white; text-decoration: none;">Contact</a></li>
+        </ul>
+      </div>
+      <div style="flex: 1; min-width: 200px;">
+        <h4>Newsletter</h4>
+        <p>Stay updated! Get the latest posts delivered to your inbox.</p>
+        <input id="subscriberEmail" type="email" placeholder="Your email" style="padding: 8px; width: 100%; border: none; border-radius: 4px; margin-bottom: 10px;" />
+        <button onclick="subscribe()" style="padding: 10px; width: 100%; background-color: #2196f3; color: white; border: none; border-radius: 4px;">Subscribe</button>
+      </div>
+      <div style="flex: 1; min-width: 200px;">
+        <h4>Follow Us</h4>
+        <p>
+          <a href="#" style="color: white; margin-right: 10px;">Facebook</a>
+          <a href="#" style="color: white; margin-right: 10px;">Twitter</a>
+          <a href="#" style="color: white;">YouTube</a>
+        </p>
+      </div>
+    </div>
+    <hr style="border-color: rgba(255,255,255,0.2); margin: 20px 0;" />
+    <div style="text-align: center; font-size: 14px;">&copy; 2025 Samuwa EducaNews. All rights reserved.</div>
+  </footer> <script>
+    function subscribe() {
+      const email = document.getElementById("subscriberEmail").value.trim();
+      if (email) {
+        alert(`Thank you for subscribing! You'll receive updates to ${email}\nFrom: samuwaeducanewscampany@hotmail.com`);
+        document.getElementById("subscriberEmail").value = "";
+      } else {
+        alert("Please enter your email address.");
+      }
+    }
+  </script>
 </body>
 </html>
