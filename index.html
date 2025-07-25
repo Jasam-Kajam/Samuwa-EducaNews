@@ -224,6 +224,11 @@ footer a:hover {
         section.appendChild(div);
       });
     });
+
+document.addEventListener("contextmenu", e => {
+      e.preventDefault();
+      alert("🚫 Right-click disabled to protect content.");
+    });
   </script>  <footer style="background-color: #0d47a1; color: white; padding: 40px 20px; font-family: Arial, sans-serif;">
     <div style="display: flex; flex-wrap: wrap; justify-content: space-between; max-width: 1200px; margin: auto;">
       <div style="flex: 1; min-width: 200px;">
