@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin Panel</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Quill Editor -->
+  <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet" />
+  <script src="https://cdn.quilljs.com/1.3.7/quill.js"></script>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
+
+  <!-- Styles -->
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      width: 100%;
+      max-width: 100vw;
+      margin: 0;
+      padding: 20px;
+      font-family: Arial, sans-serif;
+      overflow-x: hidden;
+    }
+
+    .hidden { display: none; }
+
+    .card {
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 8px;
+      word-wrap: break-word;
+    }
+
+    iframe, img, video {
+      max-width: 100%;
+      height: auto;
+      display: block;
+      margin-top: 10px;
+    }
+
+    #editor {
+      height: 200px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      padding: 10px;
+      background: #fff;
+      overflow-y: auto;
+    }
+
+    .ql-toolbar.ql-snow {
+      flex-wrap: wrap;
+      overflow-x: hidden !important;
+    }
+
+    .ql-editor {
+      white-space: normal;
+      word-wrap: break-word;
+    }
+
+    input[type="text"], input[type="email"], input[type="password"], select {
+      max-width: 100%;
+      padding: 8px;
+    }
+
+    button {
+      padding: 8px 16px;
+      margin-top: 10px;
+    }
+
+    h1, h2 {
+      color: #333;
+    }
+
+    hr {
+      margin: 20px 0;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Admin Panel</h1>
+
+  <!-- Login Section -->
+  <div id="login-section">
+    <input type="email" id="adminEmail" placeholder="Admin Email"><br><br>
+    <input type="password" id="adminPassword" placeholder="Password"><br><br>
+    <button id="loginBtn">Login</button>
+    <p id="loginStatus"></p>
+  </div>
+
+  <!-- Upload Section -->
+  <div id="upload-section" class="hidden">
+    <h2>Upload New Post</h2>
+    <input type="text" id="title" placeholder="Title"><br><br>
+
+    <select id="category">
+      <option value="">Select Category</option>
+      <option value="news">News</option>
+      <option value="sports">Sports</option>
+      <option value="blogs">Blogs</option>
+      <option value="business">Business</option>
+      <option value="courses">Courses</option>
+      <option value="funny">Funny</option>
+    </select><br><br>
+
+    <input type="file" id="file"><br><br>
+    <div id="editor"></div><br>
+    <button id="uploadBtn">Upload</button>
+    <p id="uploadStatus"></p>
+
+    <hr>
+    <h2>Uploaded Posts</h2>
+    <label for="categoryFilter">Filter by Category:</label>
+    <select id="categoryFilter">
+      <option value="all">All</option>
+      <option value="news">News</option>
+      <option value="sports">Sports</option>
+      <option value="blogs">Blogs</option>
+      <option value="business">Business</option>
+      <option value="courses">Courses</option>
+      <option value="funny">Funny</option>
+    </select>
+
+    <input type="text" id="searchTitle" placeholder="Search by title..." style="margin-left: 10px;">
+    <div id="contentArea"></div>
+  </div>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyAwAxP-MWwNnKP59PA6joil4Ceq10eozlc",
+    authDomain: "wafula-s-educational-posts.firebaseapp.com",
+    projectId: "wafula-s-educational-posts",
+    storageBucket: "wafula-s-educational-posts.appspot.com",
+    messagingSenderId: "your-id",
+    appId: "your-id"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+  const storage = firebase.storage();
+
+  const uploadBtn = document.getElementById("uploadBtn");
+  const uploadSection = document.getElementById("upload-section");
+  const uploadStatus = document.getElementById("uploadStatus");
+
+  // Show upload section by default (authentication removed)
+  uploadSection.classList.remove("hidden");
+
+  async function uploadHandler() {
+    const title = document.getElementById("title").value.trim();
+    const category = document.getElementById("category").value;
+    const content = quill.root.innerHTML.trim();
+
+    if (!title || !category || !content) {
+      uploadStatus.textContent = "Please fill in title, category, and content.";
+      return;
+    }
+
+    uploadStatus.textContent = "Uploading...";
+
+    try {
+      await db.collection("posts").add({
+        title: title,
+        category: category,
+        content: content,
+        timestamp: Date.now(),
+      });
+
+      uploadStatus.textContent = "Post uploaded successfully!";
+      document.getElementById("title").value = "";
+      document.getElementById("category").value = "";
+      quill.root.innerHTML = "";
+      uploadBtn.textContent = "Upload";
+      uploadBtn.onclick = uploadHandler;
+      loadPosts();
+    } catch (err) {
+      console.error(err);
+      uploadStatus.textContent = "Upload failed: " + err.message;
+    }
+  }
+
+  // Editor + handlers setup
+  const quill = new Quill('#editor', {
+    theme: 'snow',
+    placeholder: 'Write article content here...',
+    modules: {
+      toolbar: [
+        [{ header: [1, 2, 3, false] }],
+        ['bold', 'italic', 'underline', 'strike'],
+        [{ list: 'ordered' }, { list: 'bullet' }],
+        ['blockquote', 'code-block'],
+        ['link', 'image', 'video'],
+        ['clean']
+      ]
+    }
+  });
+
+  uploadBtn.addEventListener("click", uploadHandler);
+  document.getElementById("categoryFilter").addEventListener("change", loadPosts);
+  document.getElementById("searchTitle").addEventListener("input", loadPosts);
+
+  // Initial load
+  loadPosts();
+</script>
+<script> document.getElementById("categoryFilter").addEventListener("change", loadPosts);
+    document.getElementById("searchTitle").addEventListener("input", loadPosts);
+  </script>
+</body>
+</html>
