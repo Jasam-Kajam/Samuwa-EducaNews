@@ -59,15 +59,11 @@ footer {
 </head>
 <body><header>
   <h1>EDUCATION News</h1>
-</header>
-<div class="post-container" id="postContainer">
+</header><div class="post-container" id="postContainer">
   <!-- Post content loads here -->
 </div><footer>
   &copy; 2025 EduNews. All rights reserved.
-</footer><!-- Firebase --><script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
-<script>
+</footer><!-- Firebase --><script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script><script>
   const firebaseConfig = {
     apiKey: "AIzaSyAwAxP-MWwNnKP59PA6joil4Ceq10eozlc",
     authDomain: "wafula-s-educational-posts.firebaseapp.com",
@@ -83,31 +79,34 @@ footer {
   const postId = new URLSearchParams(window.location.search).get("id");
 
   async function loadPost() {
+    const container = document.getElementById("postContainer");
+
     if (!postId) {
-      document.getElementById("postContainer").innerHTML = "<p>Post ID not provided.</p>";
+      container.innerHTML = "<p>Post ID not provided.</p>";
       return;
     }
 
     try {
-      const doc = await db.collection("posts").doc(postId).get();
-      if (!doc.exists) {
-        document.getElementById("postContainer").innerHTML = "<p>Post not found.</p>";
+      const docRef = db.collection("posts").doc(postId);
+      const docSnap = await docRef.get();
+
+      if (!docSnap.exists) {
+        container.innerHTML = "<p>Post not found.</p>";
         return;
       }
 
-      const post = doc.data();
-      document.getElementById("postContainer").innerHTML = `
-        <h2>${post.title || 'No Title'}</h2>
-        <p><em>${post.category || 'Uncategorized'}</em></p>
-        <div>${post.content || ''}</div>
+      const post = docSnap.data();
+      container.innerHTML = `
+        <div class="post-title">${post.title || 'No Title'}</div>
+        <div class="post-category">${post.category || 'Uncategorized'}</div>
+        <div class="post-content">${post.content || 'No content available.'}</div>
       `;
-    } catch (err) {
-      console.error(err);
-      document.getElementById("postContainer").innerHTML = "<p>Error loading post.</p>";
+    } catch (error) {
+      console.error("Error loading post:", error);
+      container.innerHTML = "<p>Failed to load post. Try again later.</p>";
     }
   }
 
   window.onload = loadPost;
-</script>
-</body>
+</script></body>
 </html>
