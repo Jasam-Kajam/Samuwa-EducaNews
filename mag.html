@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EduNews Magazine</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Georgia', serif;
+      margin: 0;
+      background: #f9f9f9;
+      color: #222;
+    }
+
+    header {
+      background: #d32f2f;
+      color: #fff;
+      padding: 20px;
+      text-align: center;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 3em;
+      letter-spacing: 2px;
+    }
+
+    .sub-header {
+      background: #ffc107;
+      color: #000;
+      text-align: center;
+      padding: 10px;
+      font-weight: bold;
+    }
+
+    .grid-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      padding: 20px;
+      max-width: 1200px;
+      margin: auto;
+    }
+
+    .card {
+      background: #fff;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.05);
+    }
+
+    .card h2 {
+      font-size: 1.3em;
+      margin-bottom: 5px;
+      color: #c62828;
+    }
+
+    .card p {
+      font-size: 0.9em;
+      color: #555;
+    }
+
+    .card div {
+      margin-top: 10px;
+    }
+
+    footer {
+      background: #263238;
+      color: #ccc;
+      text-align: center;
+      padding: 20px;
+      font-size: 0.85em;
+      margin-top: 40px;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>EDUCATION News</h1>
+    <div class="sub-header">The Bestselling Newspaper on Education</div>
+  </header>
+
+  <div class="grid-container" id="postsGrid">
+    <!-- Dynamic content loads here -->
+  </div>
+
+  <footer>
+    &copy; 2025 EduNews. All rights reserved.
+  </footer>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+
+  <script>
+    // Replace with your actual Firebase config:
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "SENDER_ID",
+      appId: "APP_ID"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    async function loadMagazinePosts() {
+      const grid = document.getElementById("postsGrid");
+      grid.innerHTML = "<p>Loading posts...</p>";
+
+      try {
+        const snapshot = await db.collection("posts").orderBy("timestamp", "desc").get();
+        grid.innerHTML = "";
+
+        snapshot.forEach(doc => {
+          const post = doc.data();
+          const card = document.createElement("div");
+          card.className = "card";
+
+          card.innerHTML = `
+            <h2>${post.title}</h2>
+            <p><em>${post.category || 'Uncategorized'}</em></p>
+            <div>${post.content}</div>
+          `;
+
+          grid.appendChild(card);
+        });
+
+      } catch (err) {
+        grid.innerHTML = "<p>Failed to load posts. Check console for errors.</p>";
+        console.error("Error loading posts:", err);
+      }
+    }
+
+    window.onload = loadMagazinePosts;
+  </script>
+</body>
+</html>
