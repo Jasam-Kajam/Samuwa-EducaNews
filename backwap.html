@@ -152,40 +152,41 @@
   }
 
   async function uploadHandler() {
-    const title = document.getElementById("title").value.trim();
-    const category = document.getElementById("category").value;
-    const content = quill.root.innerHTML.trim();
+  const title = document.getElementById("title").value.trim();
+  const category = document.getElementById("category").value || "uncategorized";
+  const content = quill.root.innerHTML.trim();
+  const plainText = quill.getText().trim();
 
-    if (!title || !category || !content) {
-      uploadStatus.textContent = "Please fill in title, category, and content.";
-      return;
-    }
-
-    uploadStatus.textContent = editingPostId ? "Updating..." : "Uploading...";
-
-    try {
-      if (editingPostId) {
-        await db.collection("posts").doc(editingPostId).update({ title, category, content });
-        uploadStatus.textContent = "Post updated!";
-      } else {
-        await db.collection("posts").add({
-          title, category, content,
-          timestamp: Date.now()
-        });
-        uploadStatus.textContent = "Post uploaded!";
-      }
-
-      document.getElementById("title").value = "";
-      document.getElementById("category").value = "";
-      quill.root.innerHTML = "";
-      uploadBtn.textContent = "Upload";
-      editingPostId = null;
-      loadPosts();
-    } catch (err) {
-      console.error(err);
-      uploadStatus.textContent = "Error: " + err.message;
-    }
+  if (!title || plainText === "") {
+    uploadStatus.textContent = "Please fill in title and content.";
+    return;
   }
+
+  uploadStatus.textContent = editingPostId ? "Updating..." : "Uploading...";
+
+  try {
+    if (editingPostId) {
+      await db.collection("posts").doc(editingPostId).update({ title, category, content });
+      uploadStatus.textContent = "Post updated!";
+    } else {
+      await db.collection("posts").add({
+        title, category, content,
+        timestamp: Date.now()
+      });
+      uploadStatus.textContent = "Post uploaded!";
+    }
+
+    document.getElementById("title").value = "";
+    document.getElementById("category").value = "";
+    quill.setContents([]);
+    uploadBtn.textContent = "Upload";
+    editingPostId = null;
+    loadPosts();
+  } catch (err) {
+    console.error(err);
+    uploadStatus.textContent = "Error: " + err.message;
+  }
+}
 
   function editPost(id, title, category, content) {
     document.getElementById("title").value = title;
