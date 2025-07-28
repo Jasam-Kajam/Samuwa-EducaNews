@@ -14,7 +14,6 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
 
-  <!-- Styles -->
   <style>
     * { box-sizing: border-box; }
     html, body {
@@ -25,7 +24,6 @@
       font-family: Arial, sans-serif;
       overflow-x: hidden;
     }
-
     .card {
       border: 1px solid #ccc;
       padding: 10px;
@@ -33,14 +31,12 @@
       border-radius: 8px;
       word-wrap: break-word;
     }
-
     iframe, img, video {
       max-width: 100%;
       height: auto;
       display: block;
       margin-top: 10px;
     }
-
     #editor {
       height: 200px;
       border: 1px solid #ccc;
@@ -49,31 +45,26 @@
       background: #fff;
       overflow-y: auto;
     }
-
     .ql-toolbar.ql-snow {
       flex-wrap: wrap;
       overflow-x: hidden !important;
     }
-
     .ql-editor {
       white-space: normal;
       word-wrap: break-word;
     }
-
     input[type="text"], input[type="email"], select {
       max-width: 100%;
       padding: 8px;
     }
-
     button {
       padding: 8px 16px;
       margin-top: 10px;
+      margin-right: 10px;
     }
-
     h1, h2 {
       color: #333;
     }
-
     hr {
       margin: 20px 0;
     }
@@ -96,6 +87,7 @@
       <option value="business">Business</option>
       <option value="courses">Courses</option>
       <option value="funny">Funny</option>
+      <option value="inspire">Inspire Me</option>
     </select><br><br>
 
     <input type="file" id="file"><br><br>
@@ -114,6 +106,7 @@
       <option value="business">Business</option>
       <option value="courses">Courses</option>
       <option value="funny">Funny</option>
+      <option value="inspire">Inspire Me</option>
     </select>
 
     <input type="text" id="searchTitle" placeholder="Search by title..." style="margin-left: 10px;">
@@ -137,37 +130,7 @@
   const uploadBtn = document.getElementById("uploadBtn");
   const uploadStatus = document.getElementById("uploadStatus");
 
-  async function uploadHandler() {
-    const title = document.getElementById("title").value.trim();
-    const category = document.getElementById("category").value;
-    const content = quill.root.innerHTML.trim();
-
-    if (!title || !category || !content) {
-      uploadStatus.textContent = "Please fill in title, category, and content.";
-      return;
-    }
-
-    uploadStatus.textContent = "Uploading...";
-
-    try {
-      await db.collection("posts").add({
-        title: title,
-        category: category,
-        content: content,
-        timestamp: Date.now(),
-      });
-
-      uploadStatus.textContent = "Post uploaded successfully!";
-      document.getElementById("title").value = "";
-      document.getElementById("category").value = "";
-      quill.root.innerHTML = "";
-      uploadBtn.textContent = "Upload";
-      loadPosts();
-    } catch (err) {
-      console.error(err);
-      uploadStatus.textContent = "Upload failed: " + err.message;
-    }
-  }
+  let editingPostId = null;
 
   const quill = new Quill('#editor', {
     theme: 'snow',
@@ -184,15 +147,110 @@
     }
   });
 
+  function escapeQuotes(str) {
+    return (str || "").replace(/`/g, "\\`").replace(/\$/g, "\\$");
+  }
+
+  async function uploadHandler() {
+    const title = document.getElementById("title").value.trim();
+    const category = document.getElementById("category").value;
+    const content = quill.root.innerHTML.trim();
+
+    if (!title || !category || !content) {
+      uploadStatus.textContent = "Please fill in title, category, and content.";
+      return;
+    }
+
+    uploadStatus.textContent = editingPostId ? "Updating..." : "Uploading...";
+
+    try {
+      if (editingPostId) {
+        await db.collection("posts").doc(editingPostId).update({ title, category, content });
+        uploadStatus.textContent = "Post updated!";
+      } else {
+        await db.collection("posts").add({
+          title, category, content,
+          timestamp: Date.now()
+        });
+        uploadStatus.textContent = "Post uploaded!";
+      }
+
+      document.getElementById("title").value = "";
+      document.getElementById("category").value = "";
+      quill.root.innerHTML = "";
+      uploadBtn.textContent = "Upload";
+      editingPostId = null;
+      loadPosts();
+    } catch (err) {
+      console.error(err);
+      uploadStatus.textContent = "Error: " + err.message;
+    }
+  }
+
+  function editPost(id, title, category, content) {
+    document.getElementById("title").value = title;
+    document.getElementById("category").value = category;
+    quill.root.innerHTML = content;
+    uploadBtn.textContent = "Update";
+    uploadStatus.textContent = `Editing post: ${title}`;
+    editingPostId = id;
+  }
+
+  async function deletePost(id) {
+    if (!confirm("Are you sure you want to delete this post?")) return;
+
+    try {
+      await db.collection("posts").doc(id).delete();
+      alert("Post deleted.");
+      loadPosts();
+    } catch (err) {
+      console.error(err);
+      alert("Failed to delete: " + err.message);
+    }
+  }
+
+  async function loadPosts() {
+    const contentArea = document.getElementById("contentArea");
+    contentArea.innerHTML = "Loading...";
+
+    const filter = document.getElementById("categoryFilter").value;
+    const searchTitle = document.getElementById("searchTitle").value.toLowerCase();
+
+    let query = db.collection("posts").orderBy("timestamp", "desc");
+    if (filter !== "all") query = query.where("category", "==", filter);
+
+    try {
+      const snapshot = await query.get();
+      contentArea.innerHTML = "";
+
+      snapshot.forEach(doc => {
+        const post = doc.data();
+        const id = doc.id;
+
+        if (!post.title.toLowerCase().includes(searchTitle)) return;
+
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
+          <h3>${post.title}</h3>
+          <p><strong>Category:</strong> ${post.category}</p>
+          <div>${post.content}</div>
+          <button onclick="editPost('${id}', \`${escapeQuotes(post.title)}\`, '${post.category}', \`${escapeQuotes(post.content)}\`)">Edit</button>
+          <button onclick="deletePost('${id}')">Delete</button>
+        `;
+        contentArea.appendChild(card);
+      });
+
+      if (contentArea.innerHTML === "") contentArea.innerHTML = "No posts found.";
+    } catch (err) {
+      console.error(err);
+      contentArea.innerHTML = "Error loading posts.";
+    }
+  }
+
   uploadBtn.addEventListener("click", uploadHandler);
   document.getElementById("categoryFilter").addEventListener("change", loadPosts);
   document.getElementById("searchTitle").addEventListener("input", loadPosts);
-
-  // Dummy placeholder function for loading posts
-  function loadPosts() {
-    // implement your actual post loading logic here
-    console.log("Loading posts...");
-  }
 
   loadPosts();
 </script>
