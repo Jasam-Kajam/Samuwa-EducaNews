@@ -1,136 +1,109 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>View Post</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EduNews Post</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      max-width: 800px;
-      margin: auto;
-      padding: 20px;
-      background-color: #f5f5f5;
-    }
-    h1 {
+      font-family: 'Georgia', serif;
+      margin: 0;
+      background: #f4f4f4;
       color: #333;
-    }
-    .post-meta {
-      color: #777;
-      font-size: 0.9em;
-      margin-bottom: 10px;
-    }
-    iframe, img, video {
-      max-width: 100%;
-      height: auto;
-      margin-top: 15px;
-    }
+      padding: 20px;
+    }header {
+  background: #d32f2f;
+  color: #fff;
+  padding: 20px;
+  text-align: center;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 2.5em;
+}
+
+.post-container {
+  max-width: 800px;
+  margin: 30px auto;
+  background: #fff;
+  padding: 25px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+.post-title {
+  font-size: 2em;
+  color: #c62828;
+  margin-bottom: 5px;
+}
+
+.post-category {
+  font-size: 0.9em;
+  color: #777;
+  margin-bottom: 20px;
+}
+
+.post-content {
+  font-size: 1.1em;
+  line-height: 1.6;
+}
+
+footer {
+  margin-top: 60px;
+  text-align: center;
+  color: #aaa;
+  font-size: 0.9em;
+}
+
   </style>
-
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 </head>
+<body><header>
+  <h1>EDUCATION News</h1>
+</header><div class="post-container" id="postContainer">
+  <!-- Post content loads here -->
+</div><footer>
+  &copy; 2025 EduNews. All rights reserved.
+</footer><!-- Firebase --><script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script><script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyAwAxP-MWwNnKP59PA6joil4Ceq10eozlc",
+    authDomain: "wafula-s-educational-posts.firebaseapp.com",
+    projectId: "wafula-s-educational-posts",
+    storageBucket: "wafula-s-educational-posts.appspot.com",
+    messagingSenderId: "your-id",
+    appId: "your-id"
+  };
 
-<body>
-  <h1 id="postTitle">Loading...</h1>
-  <p class="post-meta" id="postCategory"></p>
-  <div id="postContent"></div>
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
 
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyAwAxP-MWwNnKP59PA6joil4Ceq10eozlc",
-      authDomain: "wafula-s-educational-posts.firebaseapp.com",
-      projectId: "wafula-s-educational-posts",
-      storageBucket: "wafula-s-educational-posts.appspot.com",
-      messagingSenderId: "your-id",
-      appId: "your-id"
-    };
-
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-
-    // Get post ID from URL
+  async function loadPostById() {
     const urlParams = new URLSearchParams(window.location.search);
     const postId = urlParams.get("id");
 
     if (!postId) {
-      document.getElementById("postTitle").textContent = "No post ID provided.";
-    } else {
-      db.collection("posts").doc(postId).get().then(doc => {
-        if (doc.exists) {
-          const post = doc.data();
-          document.getElementById("postTitle").textContent = post.title;
-          document.getElementById("postCategory").textContent = "Category: " + post.category;
-
-          let html = post.article || "";
-
-          if (post.url) {
-            const ext = post.url.split('.').pop().split('?')[0].toLowerCase();
-            if (ext === "pdf") {
-              html += `<iframe src="${post.url}" height="400"></iframe>`;
-            } else if (["jpg", "jpeg", "png", "gif"].includes(ext)) {
-              html += `<img src="${post.url}" alt="Image">`;
-            } else if (["mp4", "webm"].includes(ext)) {
-              html += `<video controls><source src="${post.url}" type="video/${ext}"></video>`;
-            } else {
-              html += `<p><a href="${post.url}" target="_blank">Download File</a></p>`;
-            }
-          }
-
-          document.getElementById("postContent").innerHTML = html;
-        } else {
-          document.getElementById("postTitle").textContent = "Post not found.";
-        }
-      }).catch(error => {
-        document.getElementById("postTitle").textContent = "Error loading post.";
-        console.error(error);
-      });
+      document.getElementById("postContainer").innerHTML = "<p>Post ID not provided.</p>";
+      return;
     }
-  </script>
-<footer style="background-color: #0d47a1; color: white; padding: 40px 20px; font-family: Arial, sans-serif;">
-    <div style="display: flex; flex-wrap: wrap; justify-content: space-between; max-width: 1200px; margin: auto;">
-      <div style="flex: 1; min-width: 200px;">
-        <h3 style="font-family: 'Times New Roman', serif;">Samuwa EducaNews</h3>
-        <p>Empowering students, teachers, and readers with quality educational content and news updates.</p>
-      </div>
-      <div style="flex: 1; min-width: 200px;">
-        <h4>Quick Links</h4>
-        <ul style="list-style: none; padding: 0;">
-          <li><a href="index.html" style="color: white; text-decoration: none;">Home</a></li>
-          <li><a href="article.html" style="color: white; text-decoration: none;">Latest Articles</a></li>
-          <li><a href="#" style="color: white; text-decoration: none;">Categories</a></li>
-          <li><a href="about.html" style="color: white; text-decoration: none;">About Us</a></li>
-          <li><a href="contac.html" style="color: white; text-decoration: none;">Contact</a></li>
-        </ul>
-      </div>
-      <div style="flex: 1; min-width: 200px;">
-        <h4>Newsletter</h4>
-        <p>Stay updated! Get the latest posts delivered to your inbox.</p>
-        <input id="subscriberEmail" type="email" placeholder="Your email" style="padding: 8px; width: 100%; border: none; border-radius: 4px; margin-bottom: 10px;" />
-        <button onclick="subscribe()" style="padding: 10px; width: 100%; background-color: #2196f3; color: white; border: none; border-radius: 4px;">Subscribe</button>
-      </div>
-      <div style="flex: 1; min-width: 200px;">
-        <h4>Follow Us</h4>
-        <p>
-          <a href="#" style="color: white; margin-right: 10px;">Facebook</a>
-          <a href="#" style="color: white; margin-right: 10px;">Twitter</a>
-          <a href="#" style="color: white;">YouTube</a>
-        </p>
-      </div>
-    </div>
-    <hr style="border-color: rgba(255,255,255,0.2); margin: 20px 0;" />
-    <div style="text-align: center; font-size: 14px;">&copy; 2025 Samuwa EducaNews. All rights reserved.</div>
-  </footer> <script>
-    function subscribe() {
-      const email = document.getElementById("subscriberEmail").value.trim();
-      if (email) {
-        alert(`Thank you for subscribing! You'll receive updates to ${email}\nFrom: samuwaeducanewscampany@hotmail.com`);
-        document.getElementById("subscriberEmail").value = "";
-      } else {
-        alert("Please enter your email address.");
+
+    try {
+      const doc = await db.collection("posts").doc(postId).get();
+      if (!doc.exists) {
+        document.getElementById("postContainer").innerHTML = "<p>Post not found.</p>";
+        return;
       }
+
+      const post = doc.data();
+      document.getElementById("postContainer").innerHTML = `
+        <div class="post-title">${post.title}</div>
+        <div class="post-category">${post.category || 'Uncategorized'}</div>
+        <div class="post-content">${post.content}</div>
+      `;
+    } catch (error) {
+      console.error("Error loading post:", error);
+      document.getElementById("postContainer").innerHTML = "<p>Failed to load post. Try again later.</p>";
     }
-  </script>
-</body>
+  }
+
+  window.onload = loadPostById;
+</script></body>
 </html>
