@@ -1,7 +1,8 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>EduNews Post</title>
   <style>
     body {
@@ -10,105 +11,119 @@
       background: #f4f4f4;
       color: #333;
       padding: 20px;
-    }header {
-  background: #d32f2f;
-  color: #fff;
-  padding: 20px;
-  text-align: center;
-}
-
-header h1 {
-  margin: 0;
-  font-size: 2.5em;
-}
-
-.post-container {
-  max-width: 800px;
-  margin: 30px auto;
-  background: #fff;
-  padding: 25px;
-  border-radius: 10px;
-  box-shadow: 0 0 10px rgba(0,0,0,0.1);
-}
-
-.post-title {
-  font-size: 2em;
-  color: #c62828;
-  margin-bottom: 5px;
-}
-
-.post-category {
-  font-size: 0.9em;
-  color: #777;
-  margin-bottom: 20px;
-}
-
-.post-content {
-  font-size: 1.1em;
-  line-height: 1.6;
-}
-
-footer {
-  margin-top: 60px;
-  text-align: center;
-  color: #aaa;
-  font-size: 0.9em;
-}
-
-  </style>
-</head>
-<body><header>
-  <h1>EDUCATION News</h1>
-</header><div class="post-container" id="postContainer">
-  <!-- Post content loads here -->
-</div><footer>
-  &copy; 2025 EduNews. All rights reserved.
-</footer><!-- Firebase --><script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script><script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyAwAxP-MWwNnKP59PA6joil4Ceq10eozlc",
-    authDomain: "wafula-s-educational-posts.firebaseapp.com",
-    projectId: "wafula-s-educational-posts",
-    storageBucket: "wafula-s-educational-posts.appspot.com",
-    messagingSenderId: "your-id",
-    appId: "your-id"
-  };
-
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
-
-  const postId = new URLSearchParams(window.location.search).get("id");
-
-  async function loadPost() {
-    const container = document.getElementById("postContainer");
-
-    if (!postId) {
-      container.innerHTML = "<p>Post ID not provided.</p>";
-      return;
     }
 
-    try {
-      const docRef = db.collection("posts").doc(postId);
-      const docSnap = await docRef.get();
+    header {
+      background: #d32f2f;
+      color: #fff;
+      padding: 20px;
+      text-align: center;
+    }
 
-      if (!docSnap.exists) {
-        container.innerHTML = "<p>Post not found.</p>";
+    header h1 {
+      margin: 0;
+      font-size: 2.5em;
+    }
+
+    .post-container {
+      max-width: 800px;
+      margin: 30px auto;
+      background: #fff;
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .post-title {
+      font-size: 2em;
+      color: #c62828;
+      margin-bottom: 5px;
+    }
+
+    .post-category {
+      font-size: 0.9em;
+      color: #777;
+      margin-bottom: 20px;
+    }
+
+    .post-content {
+      font-size: 1.1em;
+      line-height: 1.6;
+    }
+
+    footer {
+      margin-top: 60px;
+      text-align: center;
+      color: #aaa;
+      font-size: 0.9em;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>EDUCATION News</h1>
+  </header>
+
+  <div class="post-container" id="postContainer">
+    <!-- Post content loads here -->
+  </div>
+
+  <footer>
+    &copy; 2025 EduNews. All rights reserved.
+  </footer>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyAwAxP-MWwNnKP59PA6joil4Ceq10eozlc",
+      authDomain: "wafula-s-educational-posts.firebaseapp.com",
+      projectId: "wafula-s-educational-posts",
+      storageBucket: "wafula-s-educational-posts.appspot.com",
+      messagingSenderId: "your-id",
+      appId: "your-id"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    const postId = new URLSearchParams(window.location.search).get("id");
+
+    async function loadPost() {
+      const container = document.getElementById("postContainer");
+
+      if (!postId) {
+        container.innerHTML = "<p>Post ID not provided.</p>";
         return;
       }
 
-      const post = docSnap.data();
-      container.innerHTML = `
-  <div class="post-title">${post.title || 'No Title'}</div>
-  <div class="post-category">${post.category || 'Uncategorized'}</div>
-  <div class="post-content" id="contentArea">Loading content...</div>
-`;
+      try {
+        const docRef = db.collection("posts").doc(postId);
+        const docSnap = await docRef.get();
 
-document.getElementById("contentArea").innerHTML = post.content || 'No content available.';
-    } catch (error) {
-      console.error("Error loading post:", error);
-      container.innerHTML = "<p>Failed to load post. Try again later.</p>";
+        if (!docSnap.exists) {
+          container.innerHTML = "<p>Post not found.</p>";
+          return;
+        }
+
+        const post = docSnap.data();
+        const title = post.title || 'No Title';
+        const category = post.category || 'Uncategorized';
+        const contentHTML = post.content || 'No content available.';
+
+        container.innerHTML = `
+          <div class="post-title">${title}</div>
+          <div class="post-category">${category}</div>
+          <div class="post-content" id="contentArea">${contentHTML}</div>
+        `;
+      } catch (error) {
+        console.error("Error loading post:", error);
+        container.innerHTML = "<p>Failed to load post. Try again later.</p>";
+      }
     }
-  }
 
-  window.onload = loadPost;
-</script></body>
+    window.onload = loadPost;
+  </script>
+</body>
 </html>
