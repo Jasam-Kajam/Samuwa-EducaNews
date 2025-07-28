@@ -97,10 +97,12 @@ footer {
 
       const post = docSnap.data();
       container.innerHTML = `
-        <div class="post-title">${post.title || 'No Title'}</div>
-        <div class="post-category">${post.category || 'Uncategorized'}</div>
-        <div class="post-content">${post.content || 'No content available.'}</div>
-      `;
+  <div class="post-title">${post.title || 'No Title'}</div>
+  <div class="post-category">${post.category || 'Uncategorized'}</div>
+  <div class="post-content" id="contentArea">Loading content...</div>
+`;
+
+document.getElementById("contentArea").innerHTML = post.content || 'No content available.';
     } catch (error) {
       console.error("Error loading post:", error);
       container.innerHTML = "<p>Failed to load post. Try again later.</p>";
