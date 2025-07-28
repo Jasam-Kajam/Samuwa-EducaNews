@@ -11,7 +11,6 @@
 
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
 
@@ -26,8 +25,6 @@
       font-family: Arial, sans-serif;
       overflow-x: hidden;
     }
-
-    .hidden { display: none; }
 
     .card {
       border: 1px solid #ccc;
@@ -63,7 +60,7 @@
       word-wrap: break-word;
     }
 
-    input[type="text"], input[type="email"], input[type="password"], select {
+    input[type="text"], input[type="email"], select {
       max-width: 100%;
       padding: 8px;
     }
@@ -86,16 +83,8 @@
 <body>
   <h1>Admin Panel</h1>
 
-  <!-- Login Section -->
-  <div id="login-section">
-    <input type="email" id="adminEmail" placeholder="Admin Email"><br><br>
-    <input type="password" id="adminPassword" placeholder="Password"><br><br>
-    <button id="loginBtn">Login</button>
-    <p id="loginStatus"></p>
-  </div>
-
   <!-- Upload Section -->
-  <div id="upload-section" class="hidden">
+  <div id="upload-section">
     <h2>Upload New Post</h2>
     <input type="text" id="title" placeholder="Title"><br><br>
 
@@ -146,11 +135,7 @@
   const storage = firebase.storage();
 
   const uploadBtn = document.getElementById("uploadBtn");
-  const uploadSection = document.getElementById("upload-section");
   const uploadStatus = document.getElementById("uploadStatus");
-
-  // Show upload section by default (authentication removed)
-  uploadSection.classList.remove("hidden");
 
   async function uploadHandler() {
     const title = document.getElementById("title").value.trim();
@@ -177,7 +162,6 @@
       document.getElementById("category").value = "";
       quill.root.innerHTML = "";
       uploadBtn.textContent = "Upload";
-      uploadBtn.onclick = uploadHandler;
       loadPosts();
     } catch (err) {
       console.error(err);
@@ -185,7 +169,6 @@
     }
   }
 
-  // Editor + handlers setup
   const quill = new Quill('#editor', {
     theme: 'snow',
     placeholder: 'Write article content here...',
@@ -205,55 +188,60 @@
   document.getElementById("categoryFilter").addEventListener("change", loadPosts);
   document.getElementById("searchTitle").addEventListener("input", loadPosts);
 
-  // Initial load
+  // Dummy placeholder function for loading posts
+  function loadPosts() {
+    // implement your actual post loading logic here
+    console.log("Loading posts...");
+  }
+
   loadPosts();
 </script>
-<script> document.getElementById("categoryFilter").addEventListener("change", loadPosts);
-    document.getElementById("searchTitle").addEventListener("input", loadPosts);
-  </script>
+
 <footer style="background-color: #0d47a1; color: white; padding: 40px 20px; font-family: Arial, sans-serif;">
-    <div style="display: flex; flex-wrap: wrap; justify-content: space-between; max-width: 1200px; margin: auto;">
-      <div style="flex: 1; min-width: 200px;">
-        <h3 style="font-family: 'Times New Roman', serif;">Samuwa EducaNews</h3>
-        <p>Empowering students, teachers, and readers with quality educational content and news updates.</p>
-      </div>
-      <div style="flex: 1; min-width: 200px;">
-        <h4>Quick Links</h4>
-        <ul style="list-style: none; padding: 0;">
-          <li><a href="index.html" style="color: white; text-decoration: none;">Home</a></li>
-          <li><a href="article.html" style="color: white; text-decoration: none;">Latest Articles</a></li>
-          <li><a href="#" style="color: white; text-decoration: none;">Categories</a></li>
-          <li><a href="about.html" style="color: white; text-decoration: none;">About Us</a></li>
-          <li><a href="contac.html" style="color: white; text-decoration: none;">Contact</a></li>
-        </ul>
-      </div>
-      <div style="flex: 1; min-width: 200px;">
-        <h4>Newsletter</h4>
-        <p>Stay updated! Get the latest posts delivered to your inbox.</p>
-        <input id="subscriberEmail" type="email" placeholder="Your email" style="padding: 8px; width: 100%; border: none; border-radius: 4px; margin-bottom: 10px;" />
-        <button onclick="subscribe()" style="padding: 10px; width: 100%; background-color: #2196f3; color: white; border: none; border-radius: 4px;">Subscribe</button>
-      </div>
-      <div style="flex: 1; min-width: 200px;">
-        <h4>Follow Us</h4>
-        <p>
-          <a href="#" style="color: white; margin-right: 10px;">Facebook</a>
-          <a href="#" style="color: white; margin-right: 10px;">Twitter</a>
-          <a href="#" style="color: white;">YouTube</a>
-        </p>
-      </div>
+  <div style="display: flex; flex-wrap: wrap; justify-content: space-between; max-width: 1200px; margin: auto;">
+    <div style="flex: 1; min-width: 200px;">
+      <h3 style="font-family: 'Times New Roman', serif;">Samuwa EducaNews</h3>
+      <p>Empowering students, teachers, and readers with quality educational content and news updates.</p>
     </div>
-    <hr style="border-color: rgba(255,255,255,0.2); margin: 20px 0;" />
-    <div style="text-align: center; font-size: 14px;">&copy; 2025 Samuwa EducaNews. All rights reserved.</div>
-  </footer> <script>
-    function subscribe() {
-      const email = document.getElementById("subscriberEmail").value.trim();
-      if (email) {
-        alert(`Thank you for subscribing! You'll receive updates to ${email}\nFrom: samuwaeducanewscampany@hotmail.com`);
-        document.getElementById("subscriberEmail").value = "";
-      } else {
-        alert("Please enter your email address.");
-      }
+    <div style="flex: 1; min-width: 200px;">
+      <h4>Quick Links</h4>
+      <ul style="list-style: none; padding: 0;">
+        <li><a href="index.html" style="color: white; text-decoration: none;">Home</a></li>
+        <li><a href="article.html" style="color: white; text-decoration: none;">Latest Articles</a></li>
+        <li><a href="#" style="color: white; text-decoration: none;">Categories</a></li>
+        <li><a href="about.html" style="color: white; text-decoration: none;">About Us</a></li>
+        <li><a href="contac.html" style="color: white; text-decoration: none;">Contact</a></li>
+      </ul>
+    </div>
+    <div style="flex: 1; min-width: 200px;">
+      <h4>Newsletter</h4>
+      <p>Stay updated! Get the latest posts delivered to your inbox.</p>
+      <input id="subscriberEmail" type="email" placeholder="Your email" style="padding: 8px; width: 100%; border: none; border-radius: 4px; margin-bottom: 10px;" />
+      <button onclick="subscribe()" style="padding: 10px; width: 100%; background-color: #2196f3; color: white; border: none; border-radius: 4px;">Subscribe</button>
+    </div>
+    <div style="flex: 1; min-width: 200px;">
+      <h4>Follow Us</h4>
+      <p>
+        <a href="#" style="color: white; margin-right: 10px;">Facebook</a>
+        <a href="#" style="color: white; margin-right: 10px;">Twitter</a>
+        <a href="#" style="color: white;">YouTube</a>
+      </p>
+    </div>
+  </div>
+  <hr style="border-color: rgba(255,255,255,0.2); margin: 20px 0;" />
+  <div style="text-align: center; font-size: 14px;">&copy; 2025 Samuwa EducaNews. All rights reserved.</div>
+</footer>
+
+<script>
+  function subscribe() {
+    const email = document.getElementById("subscriberEmail").value.trim();
+    if (email) {
+      alert(`Thank you for subscribing! You'll receive updates to ${email}\nFrom: samuwaeducanewscampany@hotmail.com`);
+      document.getElementById("subscriberEmail").value = "";
+    } else {
+      alert("Please enter your email address.");
     }
-  </script>
+  }
+</script>
 </body>
 </html>
