@@ -51,13 +51,23 @@
     }
 
     iframe, img, video {
-  max-width: 100%;
+  max-width: 50%;
   height: auto;
-  margin-top: 15px;
+  margin: 15px;
   border-radius: 6px;
-  display: block;      /* put media on its own line */
-  margin-left: auto;   /* center it */
-  margin-right: auto;
+  display: inline-block;
+}
+
+#postContent img:nth-of-type(odd),
+#postContent iframe:nth-of-type(odd),
+#postContent video:nth-of-type(odd) {
+  float: left;
+}
+
+#postContent img:nth-of-type(even),
+#postContent iframe:nth-of-type(even),
+#postContent video:nth-of-type(even) {
+  float: right;
 }
   </style>
 
