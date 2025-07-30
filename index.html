@@ -91,7 +91,10 @@
       <img src="https://files.fm/u/wyg5v3jdbp" alt="Samuwa Logo">
       Samuwa EducaNews
     </div>
-    <div class="hamburger" onclick="toggleMenu()">&#9776;</div>
+    <div class="hamburger" onclick="toggleMenu()" role="button" aria-controls="categoryMenu" aria-expanded="false" tabindex="0"
+         onkeydown="if(event.key==='Enter'||event.key===' ') toggleMenu()">
+      &#9776;
+    </div>
   </header>
 
   <!-- Hamburger menu -->
@@ -115,10 +118,16 @@
       getFirestore, collection, getDocs, query, orderBy, limit
     } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-lite.js";
 
-    function toggleMenu() {
+    // Expose globally so inline onclick works
+    window.toggleMenu = function () {
       const menu = document.getElementById("categoryMenu");
-      menu.style.display = menu.style.display === "block" ? "none" : "block";
-    }
+      const isOpen = menu.style.display === "block";
+      menu.style.display = isOpen ? "none" : "block";
+
+      // update aria-expanded
+      const btn = document.querySelector(".hamburger");
+      if (btn) btn.setAttribute("aria-expanded", String(!isOpen));
+    };
 
     // Firebase Config
     const firebaseConfig = {
