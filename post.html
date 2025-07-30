@@ -51,49 +51,45 @@
     }
 
     iframe, img, video {
-  max-width: 50%;
-  height: auto;
-  margin: 15px;
-  border-radius: 6px;
-  display: inline-block;
-}
+      max-width: 100%;
+      height: auto;
+      margin-top: 15px;
+      border-radius: 6px;
+    }
 
-/* Alternate images in the article: 1st left, 2nd right, etc. */
-#postContent img {
-  max-width: 48%;
-  height: auto;
-  border-radius: 6px;
-  margin: 0 0 1rem 0; /* base bottom margin */
-}
-
-/* Odd images (1st, 3rd, ...) -> left */
-#postContent img:nth-of-type(odd) {
-  float: left;
-  margin: 0 1rem 1rem 0; /* space to the right */
-}
-
-/* Even images (2nd, 4th, ...) -> right */
-#postContent img:nth-of-type(even) {
-  float: right;
-  margin: 0 0 1rem 1rem; /* space to the left */
-}
-
-/* Clear floats so later elements (like the footer) don't wrap beside images */
-#postContent::after {
-  content: "";
-  display: table;
-  clear: both;
-}
-
-/* Mobile: stack images full-width with no floats */
-@media (max-width: 600px) {
-  #postContent img {
-    max-width: 100%;
-    float: none;
-    display: block;
-    margin: 1rem auto;
-  }
-}
+    /* ===== Alternating images inside the article ===== */
+    #postContent img {
+      max-width: 48%;
+      height: auto;
+      border-radius: 6px;
+      margin: 0 0 1rem 0; /* base bottom margin */
+    }
+    /* Odd images (1st, 3rd, ...) -> left */
+    #postContent img:nth-of-type(odd) {
+      float: left;
+      margin: 0 1rem 1rem 0; /* space to the right */
+    }
+    /* Even images (2nd, 4th, ...) -> right */
+    #postContent img:nth-of-type(even) {
+      float: right;
+      margin: 0 0 1rem 1rem; /* space to the left */
+    }
+    /* Clear floats so later elements don't wrap beside the last image */
+    #postContent::after {
+      content: "";
+      display: table;
+      clear: both;
+    }
+    /* Mobile: stack images full-width */
+    @media (max-width: 600px) {
+      #postContent img {
+        max-width: 100%;
+        float: none;
+        display: block;
+        margin: 1rem auto;
+      }
+    }
+    /* ===== End alternating images ===== */
   </style>
 
   <!-- Firebase -->
