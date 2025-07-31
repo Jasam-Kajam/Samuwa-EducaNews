@@ -130,30 +130,18 @@
     const postRef = db.collection("posts").doc(postId);
     const viewsRef = db.collection("views").doc(postId);
 
-    // Step 1: Get user IP and increment if unique
-    fetch("https://api.ipify.org?format=json")
-      .then(res => res.json())
-      .then(data => {
-        const userIp = data.ip;
-        const ipRef = viewsRef.collection("ips").doc(userIp);
-
-        ipRef.get().then(ipDoc => {
-          if (!ipDoc.exists) {
-            viewsRef.get().then(viewSnap => {
-              if (viewSnap.exists) {
-                viewsRef.update({
-                  count: firebase.firestore.FieldValue.increment(1)
-                });
-              } else {
-                viewsRef.set({ count: 1 });
-              }
-              ipRef.set({ viewedAt: firebase.firestore.Timestamp.now() });
-            });
-          }
+    // ✅ Step 1: Increment view count every time the page loads
+    viewsRef.get().then(docSnap => {
+      if (docSnap.exists) {
+        viewsRef.update({
+          count: firebase.firestore.FieldValue.increment(1)
         });
-      });
+      } else {
+        viewsRef.set({ count: 1 });
+      }
+    });
 
-    // Step 2: Load post content
+    // ✅ Step 2: Load and render post
     postRef.get().then(doc => {
       if (doc.exists) {
         const post = doc.data();
@@ -166,7 +154,7 @@
           ? new Date(post.date).toLocaleDateString()
           : "Unknown Date";
 
-        // Step 3: Display formatted views
+        // ✅ Step 3: Show formatted views
         viewsRef.get().then(viewDoc => {
           const views = viewDoc.exists ? (viewDoc.data().count || 1) : 1;
           document.getElementById("postMeta").textContent =
