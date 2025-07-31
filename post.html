@@ -105,72 +105,87 @@
   <div id="postContent"></div>
 
   <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyAwAxP-MWwNnKP59PA6joil4Ceq10eozlc",
-      authDomain: "wafula-s-educational-posts.firebaseapp.com",
-      projectId: "wafula-s-educational-posts",
-      storageBucket: "wafula-s-educational-posts.appspot.com",
-      messagingSenderId: "your-id",
-      appId: "your-id"
-    };
+  const firebaseConfig = {
+    apiKey: "AIzaSyAwAxP-MWwNnKP59PA6joil4Ceq10eozlc",
+    authDomain: "wafula-s-educational-posts.firebaseapp.com",
+    projectId: "wafula-s-educational-posts",
+    storageBucket: "wafula-s-educational-posts.appspot.com",
+    messagingSenderId: "your-id",
+    appId: "your-id"
+  };
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const postId = urlParams.get("id");
+  const urlParams = new URLSearchParams(window.location.search);
+  const postId = urlParams.get("id");
 
-    if (!postId) {
-      document.getElementById("postTitle").textContent = "No post ID provided.";
-    } else {
-      db.collection("posts").doc(postId).get().then(doc => {
-        if (doc.exists) {
-          const post = doc.data();
+  if (!postId) {
+    document.getElementById("postTitle").textContent = "No post ID provided.";
+  } else {
+    const postRef = db.collection("posts").doc(postId);
+    const viewsRef = db.collection("views").doc(postId);
 
-          // Display title, category, author, date
-          document.getElementById("postTitle").textContent = post.title || "Untitled";
-          document.getElementById("postCategory").textContent = post.category || "Uncategorized";
+    // Step 1: Increment View Count
+    viewsRef.get().then(docSnap => {
+      if (docSnap.exists) {
+        viewsRef.update({ count: firebase.firestore.FieldValue.increment(1) });
+      } else {
+        viewsRef.set({ count: 1 });
+      }
+    });
 
-          const author = post.author || "Unknown Author";
-          const date = post.date
-            ? new Date(post.date).toLocaleDateString()
-            : "Unknown Date";
-          document.getElementById("postMeta").textContent = `By ${author} • ${date}`;
+    // Step 2: Load Post Data
+    postRef.get().then(doc => {
+      if (doc.exists) {
+        const post = doc.data();
 
-          // Display cover image if available
-          if (post.cover) {
-            const coverImage = document.getElementById("coverImage");
-            coverImage.src = post.cover;
-            coverImage.style.display = "block";
-          }
+        document.getElementById("postTitle").textContent = post.title || "Untitled";
+        document.getElementById("postCategory").textContent = post.category || "Uncategorized";
 
-          // Article content
-          let html = post.article || "";
+        const author = post.author || "Unknown Author";
+        const date = post.date
+          ? new Date(post.date).toLocaleDateString()
+          : "Unknown Date";
 
-          // Extra file/URL preview
-          if (post.url) {
-            const ext = post.url.split('.').pop().split('?')[0].toLowerCase();
-            if (ext === "pdf") {
-              html += `<iframe src="${post.url}" height="400"></iframe>`;
-            } else if (["jpg", "jpeg", "png", "gif"].includes(ext)) {
-              html += `<img src="${post.url}" alt="Image">`;
-            } else if (["mp4", "webm"].includes(ext)) {
-              html += `<video controls><source src="${post.url}" type="video/${ext}"></video>`;
-            } else {
-              html += `<p><a href="${post.url}" target="_blank">Download File</a></p>`;
-            }
-          }
+        // Fetch and display view count
+        viewsRef.get().then(viewDoc => {
+          const views = viewDoc.exists ? viewDoc.data().count : 1;
+          document.getElementById("postMeta").textContent = `By ${author} • ${date} • ${views} views`;
+        });
 
-          document.getElementById("postContent").innerHTML = html;
-        } else {
-          document.getElementById("postTitle").textContent = "Post not found.";
+        // Show cover image
+        if (post.cover) {
+          const coverImage = document.getElementById("coverImage");
+          coverImage.src = post.cover;
+          coverImage.style.display = "block";
         }
-      }).catch(error => {
-        document.getElementById("postTitle").textContent = "Error loading post.";
-        console.error(error);
-      });
-    }
-  </script>
+
+        // Content and extras
+        let html = post.article || "";
+        if (post.url) {
+          const ext = post.url.split('.').pop().split('?')[0].toLowerCase();
+          if (ext === "pdf") {
+            html += `<iframe src="${post.url}" height="400"></iframe>`;
+          } else if (["jpg", "jpeg", "png", "gif"].includes(ext)) {
+            html += `<img src="${post.url}" alt="Image">`;
+          } else if (["mp4", "webm"].includes(ext)) {
+            html += `<video controls><source src="${post.url}" type="video/${ext}"></video>`;
+          } else {
+            html += `<p><a href="${post.url}" target="_blank">Download File</a></p>`;
+          }
+        }
+
+        document.getElementById("postContent").innerHTML = html;
+      } else {
+        document.getElementById("postTitle").textContent = "Post not found.";
+      }
+    }).catch(error => {
+      document.getElementById("postTitle").textContent = "Error loading post.";
+      console.error(error);
+    });
+  }
+</script>
 
   <footer style="background-color: #0d47a1; color: white; padding: 40px 20px; font-family: Arial, sans-serif;">
     <div style="display: flex; flex-wrap: wrap; justify-content: space-between; max-width: 1200px; margin: auto;">
