@@ -130,62 +130,57 @@
     const postRef = db.collection("posts").doc(postId);
     const viewsRef = db.collection("views").doc(postId);
 
-    // ✅ Step 1: Increment view count every time the page loads
-    viewsRef.get().then(docSnap => {
-      if (docSnap.exists) {
-        viewsRef.update({
-          count: firebase.firestore.FieldValue.increment(1)
-        });
-      } else {
-        viewsRef.set({ count: 1 });
-      }
-    });
-
-    // ✅ Step 2: Load and render post
+    // Step 1: Load and display post
     postRef.get().then(doc => {
-      if (doc.exists) {
-        const post = doc.data();
+      if (!doc.exists) {
+        document.getElementById("postTitle").textContent = "Post not found.";
+        return;
+      }
 
-        document.getElementById("postTitle").textContent = post.title || "Untitled";
-        document.getElementById("postCategory").textContent = post.category || "Uncategorized";
+      const post = doc.data();
+      document.getElementById("postTitle").textContent = post.title || "Untitled";
+      document.getElementById("postCategory").textContent = post.category || "Uncategorized";
 
-        const author = post.author || "Unknown Author";
-        const date = post.date
-          ? new Date(post.date).toLocaleDateString()
-          : "Unknown Date";
+      const author = post.author || "Unknown Author";
+      const date = post.date
+        ? new Date(post.date).toLocaleDateString()
+        : "Unknown Date";
 
-        // ✅ Step 3: Show formatted views
-        viewsRef.get().then(viewDoc => {
-          const views = viewDoc.exists ? (viewDoc.data().count || 1) : 1;
+      // Step 2: Increment the view count
+      viewsRef.set({ count: firebase.firestore.FieldValue.increment(1) }, { merge: true })
+        .then(() => {
+          // Step 3: Fetch the updated count
+          return viewsRef.get();
+        })
+        .then(viewDoc => {
+          const views = viewDoc.exists ? viewDoc.data().count || 1 : 1;
           document.getElementById("postMeta").textContent =
             `By ${author} • ${date} • ${formatViews(views)} views`;
         });
 
-        if (post.cover) {
-          const coverImage = document.getElementById("coverImage");
-          coverImage.src = post.cover;
-          coverImage.style.display = "block";
-        }
-
-        let html = post.article || "";
-
-        if (post.url) {
-          const ext = post.url.split('.').pop().split('?')[0].toLowerCase();
-          if (ext === "pdf") {
-            html += `<iframe src="${post.url}" height="400"></iframe>`;
-          } else if (["jpg", "jpeg", "png", "gif"].includes(ext)) {
-            html += `<img src="${post.url}" alt="Image">`;
-          } else if (["mp4", "webm"].includes(ext)) {
-            html += `<video controls><source src="${post.url}" type="video/${ext}"></video>`;
-          } else {
-            html += `<p><a href="${post.url}" target="_blank">Download File</a></p>`;
-          }
-        }
-
-        document.getElementById("postContent").innerHTML = html;
-      } else {
-        document.getElementById("postTitle").textContent = "Post not found.";
+      // Step 4: Render post content
+      if (post.cover) {
+        const coverImage = document.getElementById("coverImage");
+        coverImage.src = post.cover;
+        coverImage.style.display = "block";
       }
+
+      let html = post.article || "";
+      if (post.url) {
+        const ext = post.url.split('.').pop().split('?')[0].toLowerCase();
+        if (ext === "pdf") {
+          html += `<iframe src="${post.url}" height="400"></iframe>`;
+        } else if (["jpg", "jpeg", "png", "gif"].includes(ext)) {
+          html += `<img src="${post.url}" alt="Image">`;
+        } else if (["mp4", "webm"].includes(ext)) {
+          html += `<video controls><source src="${post.url}" type="video/${ext}"></video>`;
+        } else {
+          html += `<p><a href="${post.url}" target="_blank">Download File</a></p>`;
+        }
+      }
+
+      document.getElementById("postContent").innerHTML = html;
+
     }).catch(error => {
       document.getElementById("postTitle").textContent = "Error loading post.";
       console.error(error);
