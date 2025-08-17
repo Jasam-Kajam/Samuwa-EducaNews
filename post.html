@@ -108,15 +108,14 @@
     authDomain: "wafula-s-educational-posts.firebaseapp.com",
     projectId: "wafula-s-educational-posts",
     storageBucket: "wafula-s-educational-posts.appspot.com",
-    messagingSenderId: "your-id",
-    appId: "your-id"
   };
 
   firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
 
-  const urlParams = new URLSearchParams(window.location.search);
-  const postId = urlParams.get("id");
+  // --- Extract slug from URL ---
+  const pathParts = window.location.pathname.split("/");
+  const slug = pathParts[pathParts.length - 1]; // e.g. "vj-partellos-wife-responds-to-age-gap-controversy"
 
   function formatViews(num) {
     if (num >= 1_000_000) return (num / 1_000_000).toFixed(1) + "M";
@@ -124,67 +123,66 @@
     return num;
   }
 
-  if (!postId) {
-    document.getElementById("postTitle").textContent = "No post ID provided.";
+  if (!slug) {
+    document.getElementById("postTitle").textContent = "No slug provided.";
   } else {
-    const postRef = db.collection("posts").doc(postId);
-    const viewsRef = db.collection("views").doc(postId);
-
-    // Step 1: Load and display post
-    postRef.get().then(doc => {
-      if (!doc.exists) {
-        document.getElementById("postTitle").textContent = "Post not found.";
-        return;
-      }
-
-      const post = doc.data();
-      document.getElementById("postTitle").textContent = post.title || "Untitled";
-      document.getElementById("postCategory").textContent = post.category || "Uncategorized";
-
-      const author = post.author || "Unknown Author";
-      const date = post.date
-        ? new Date(post.date).toLocaleDateString()
-        : "Unknown Date";
-
-      // Step 2: Increment the view count
-      viewsRef.set({ count: firebase.firestore.FieldValue.increment(1) }, { merge: true })
-        .then(() => {
-          // Step 3: Fetch the updated count
-          return viewsRef.get();
-        })
-        .then(viewDoc => {
-          const views = viewDoc.exists ? viewDoc.data().count || 1 : 1;
-          document.getElementById("postMeta").textContent =
-            `By ${author} • ${date} • ${formatViews(views)} views`;
-        });
-
-      // Step 4: Render post content
-      if (post.cover) {
-        const coverImage = document.getElementById("coverImage");
-        coverImage.src = post.cover;
-        coverImage.style.display = "block";
-      }
-
-      let html = post.article || "";
-      if (post.url) {
-        const ext = post.url.split('.').pop().split('?')[0].toLowerCase();
-        if (ext === "pdf") {
-          html += `<iframe src="${post.url}" height="400"></iframe>`;
-        } else if (["jpg", "jpeg", "png", "gif"].includes(ext)) {
-          html += `<img src="${post.url}" alt="Image">`;
-        } else if (["mp4", "webm"].includes(ext)) {
-          html += `<video controls><source src="${post.url}" type="video/${ext}"></video>`;
-        } else {
-          html += `<p><a href="${post.url}" target="_blank">Download File</a></p>`;
+    db.collection("posts").where("slug", "==", slug).limit(1).get()
+      .then(snapshot => {
+        if (snapshot.empty) {
+          document.getElementById("postTitle").textContent = "Post not found.";
+          return;
         }
-      }
 
-      document.getElementById("postContent").innerHTML = html;
+        const doc = snapshot.docs[0];
+        const postId = doc.id;
+        const post = doc.data();
 
-    }).catch(error => {
-      document.getElementById("postTitle").textContent = "Error loading post.";
-      console.error(error);
-    });
+        document.getElementById("postTitle").textContent = post.title || "Untitled";
+        document.getElementById("postCategory").textContent = post.category || "Uncategorized";
+
+        const author = post.author || "Unknown Author";
+        const date = post.date
+          ? new Date(post.date).toLocaleDateString()
+          : "Unknown Date";
+
+        // Increment + display views
+        const viewsRef = db.collection("views").doc(postId);
+        viewsRef.set({ count: firebase.firestore.FieldValue.increment(1) }, { merge: true })
+          .then(() => viewsRef.get())
+          .then(viewDoc => {
+            const views = viewDoc.exists ? viewDoc.data().count || 1 : 1;
+            document.getElementById("postMeta").textContent =
+              `By ${author} • ${date} • ${formatViews(views)} views`;
+          });
+
+        // Cover image
+        if (post.cover) {
+          const coverImage = document.getElementById("coverImage");
+          coverImage.src = post.cover;
+          coverImage.style.display = "block";
+        }
+
+        // Article + media
+        let html = post.article || "";
+        if (post.url) {
+          const ext = post.url.split('.').pop().split('?')[0].toLowerCase();
+          if (ext === "pdf") {
+            html += `<iframe src="${post.url}" height="400"></iframe>`;
+          } else if (["jpg", "jpeg", "png", "gif"].includes(ext)) {
+            html += `<img src="${post.url}" alt="Image">`;
+          } else if (["mp4", "webm"].includes(ext)) {
+            html += `<video controls><source src="${post.url}" type="video/${ext}"></video>`;
+          } else {
+            html += `<p><a href="${post.url}" target="_blank">Download File</a></p>`;
+          }
+        }
+
+        document.getElementById("postContent").innerHTML = html;
+      })
+      .catch(error => {
+        document.getElementById("postTitle").textContent = "Error loading post.";
+        console.error(error);
+      });
   }
 </script>
 
