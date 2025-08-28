@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>View Post</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 800px; margin: auto; padding: 20px; background-color: #f5f5f5; color: #333; }
+    h1#postTitle { font-size: 2.6em; font-weight: bold; color: #0d47a1; border-bottom: 4px solid #0d47a1; padding-bottom: 10px; margin-bottom: 5px; }
+    .post-category { display: inline-block; background-color: #ff6f00; color: white; font-size: 0.95em; font-weight: bold; padding: 6px 12px; border-radius: 20px; margin-top: 10px; margin-bottom: 5px; }
+    .post-meta { font-size: 0.9em; color: #555; margin-bottom: 15px; }
+    #coverImage { width: 100%; max-height: 400px; object-fit: cover; margin: 10px 0 20px 0; border-radius: 8px; display: none; }
+    iframe, img, video { max-width: 100%; height: auto; margin-top: 15px; border-radius: 6px; }
+    #postContent img { max-width: 48%; height: auto; border-radius: 6px; margin: 0 0 1rem 0; }
+    #postContent img:nth-of-type(odd) { float: left; margin: 0 1rem 1rem 0; }
+    #postContent img:nth-of-type(even) { float: right; margin: 0 0 1rem 1rem; }
+    #postContent::after { content: ""; display: table; clear: both; }
+    @media (max-width: 600px) {
+      #postContent img { max-width: 100%; float: none; display: block; margin: 1rem auto; }
+    }
+  </style>
+
+  <!-- Firebase (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+</head>
+<body>
+  <h1 id="postTitle">Loading...</h1>
+  <div class="post-category" id="postCategory"></div>
+  <div class="post-meta" id="postMeta"></div>
+
+  <!-- thumbnail appears below meta -->
+  <img id="coverImage" alt="Cover Image" />
+
+  <div id="postContent"></div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyAwAxP-MWwNnKP59PA6joil4Ceq10eozlc",
+      authDomain: "wafula-s-educational-posts.firebaseapp.com",
+      projectId: "wafula-s-educational-posts",
+      storageBucket: "wafula-s-educational-posts.appspot.com",
+      messagingSenderId: "your-id",
+      appId: "your-id"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const postId = urlParams.get("id");
+
+    function formatViews(num) {
+      if (num >= 1_000_000) return (num / 1_000_000).toFixed(1) + "M";
+      if (num >= 1_000) return (num / 1_000).toFixed(1) + "K";
+      return num;
+    }
+
+    // Robust creation date extractor
+    function getCreateDate(snapshot) {
+      try {
+        const data = snapshot.data();
+        if (data) {
+          const ts = data.timestamp || data.uploadedAt || data.createdAt || data.date;
+          if (ts) {
+            if (typeof ts.toDate === 'function') return ts.toDate();
+            if (typeof ts === 'number') return new Date(ts);
+            const parsed = Date.parse(ts);
+            if (!isNaN(parsed)) return new Date(parsed);
+          }
+        }
+      } catch(e){}
+
+      try {
+        if (snapshot.createTime && typeof snapshot.createTime.toDate === 'function') {
+          return snapshot.createTime.toDate();
+        }
+      } catch(e){}
+
+      try {
+        const delegate = snapshot._delegate || snapshot;
+        if (delegate && delegate._document && delegate._document.createTime) {
+          const ct = delegate._document.createTime;
+          if (ct.seconds) return new Date(ct.seconds * 1000);
+        }
+      } catch(e){}
+
+      try {
+        if (snapshot._document && snapshot._document.createTime && snapshot._document.createTime.seconds) {
+          return new Date(snapshot._document.createTime.seconds * 1000);
+        }
+      } catch(e){}
+
+      return null;
+    }
+
+    // Random author pool (10 names)
+    const authors = [
+      "John Wafula",
+      "Mary Atieno",
+      "Peter Kimani",
+      "Grace Naliaka",
+      "Samuel W.",
+      "Emily Chebet",
+      "Brian Otieno",
+      "Sarah Njeri",
+      "David Mwangi",
+      "Lucy Achieng"
+    ];
+
+    // Deterministic author based on postId
+    function getAuthorForPost(postId) {
+      let hash = 0;
+      for (let i = 0; i < postId.length; i++) {
+        hash = (hash << 5) - hash + postId.charCodeAt(i);
+        hash |= 0; // force 32-bit
+      }
+      const index = Math.abs(hash) % authors.length;
+      return authors[index];
+    }
+
+    if (!postId) {
+      document.getElementById("postTitle").textContent = "No post ID provided.";
+    } else {
+      const postRef = db.collection("posts").doc(postId);
+      const viewsRef = db.collection("views").doc(postId);
+
+      postRef.get().then(snapshot => {
+        if (!snapshot.exists) {
+          document.getElementById("postTitle").textContent = "Post not found.";
+          return;
+        }
+
+        const post = snapshot.data();
+        document.getElementById("postTitle").textContent = post.title || "Untitled";
+        document.getElementById("postCategory").textContent = post.category || "Uncategorized";
+
+        const author = getAuthorForPost(postId);
+
+        const createDateObj = getCreateDate(snapshot);
+        const date = createDateObj
+          ? createDateObj.toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric' })
+          : "Unknown Date";
+
+        // Increment & show views
+        viewsRef.set({ count: firebase.firestore.FieldValue.increment(1) }, { merge: true })
+          .then(() => viewsRef.get())
+          .then(viewDoc => {
+            const views = viewDoc.exists ? viewDoc.data().count || 1 : 1;
+            document.getElementById("postMeta").textContent =
+              `By ${author} • ${date} • 👁️ ${formatViews(views)}`;
+          })
+          .catch(err => {
+            document.getElementById("postMeta").textContent = `By ${author} • ${date} • 👁️ -`;
+            console.error("Views error:", err);
+          });
+
+        // Prepare article HTML
+        let html = post.article || "";
+        const parser = new DOMParser();
+        const docHTML = parser.parseFromString(html, "text/html");
+        const firstImg = docHTML.querySelector("img");
+
+        if (post.cover) {
+          const coverImage = document.getElementById("coverImage");
+          coverImage.src = post.cover;
+          coverImage.style.display = "block";
+          if (firstImg) firstImg.remove();
+          html = docHTML.body.innerHTML;
+        } else if (firstImg) {
+          const coverImage = document.getElementById("coverImage");
+          coverImage.src = firstImg.src;
+          coverImage.style.display = "block";
+          firstImg.remove();
+          html = docHTML.body.innerHTML;
+        }
+
+        if (post.url) {
+          const ext = post.url.split('.').pop().split('?')[0].toLowerCase();
+          if (ext === "pdf") {
+            html += `<iframe src="${post.url}" height="400"></iframe>`;
+          } else if (["jpg", "jpeg", "png", "gif"].includes(ext)) {
+            html += `<img src="${post.url}" alt="Image">`;
+          } else if (["mp4", "webm"].includes(ext)) {
+            html += `<video controls><source src="${post.url}" type="video/${ext}"></video>`;
+          } else {
+            html += `<p><a href="${post.url}" target="_blank" rel="noopener">Download File</a></p>`;
+          }
+        }
+
+        document.getElementById("postContent").innerHTML = html;
+      }).catch(error => {
+        document.getElementById("postTitle").textContent = "Error loading post.";
+        console.error(error);
+      });
+    }
+
+    // Disable right click
+    document.addEventListener("contextmenu", function(e) {
+      e.preventDefault();
+      alert("Right click is disabled on this page.");
+    });
+  </script>
+
+  <footer style="background-color: #0d47a1; color: white; padding: 40px 20px; font-family: Arial, sans-serif;">
+    <div style="display: flex; flex-wrap: wrap; justify-content: space-between; max-width: 1200px; margin: auto;">
+      <div style="flex: 1; min-width: 200px;">
+        <h3>Samuwa EducaNews</h3>
+        <p>Empowering students, teachers, and readers with quality educational content and news updates.</p>
+      </div>
+      <div style="flex: 1; min-width: 200px;">
+        <h4>Quick Links</h4>
+        <ul style="list-style: none; padding: 0;">
+          <li><a href="index.html" style="color: white; text-decoration: none;">Home</a></li>
+          <li><a href="article.html" style="color: white; text-decoration: none;">Latest Articles</a></li>
+          <li><a href="#" style="color: white; text-decoration: none;">Categories</a></li>
+          <li><a href="about.html" style="color: white; text-decoration: none;">About Us</a></li>
+          <li><a href="contac.html" style="color: white; text-decoration: none;">Contact</a></li>
+        </ul>
+      </div>
+      <div style="flex: 1; min-width: 200px;">
+        <h4>Newsletter</h4>
+        <p>Stay updated! Get the latest posts delivered to your inbox.</p>
+        <input id="subscriberEmail" type="email" placeholder="Your email" style="padding: 8px; width: 100%; border: none; border-radius: 4px; margin-bottom: 10px;" />
+        <button onclick="subscribe()" style="padding: 10px; width: 100%; background-color: #2196f3; color: white; border: none; border-radius: 4px;">Subscribe</button>
+      </div>
+      <div style="flex: 1; min-width: 200px;">
+        <h4>Follow Us</h4>
+        <p>
+          <a href="#" style="color: white; margin-right: 10px;">Facebook</a>
+          <a href="#" style="color: white; margin-right: 10px;">Twitter</a>
+          <a href="#" style="color: white;">YouTube</a>
+        </p>
+      </div>
+    </div>
+    <hr style="border-color: rgba(255,255,255,0.2); margin: 20px 0;" />
+    <div style="text-align: center; font-size: 14px;">&copy; 2025 Samuwa EducaNews. All rights reserved.</div>
+  </footer>
+
+  <script>
+    function subscribe() {
+      const email = document.getElementById("subscriberEmail").value.trim();
+      if (email) {
+        alert(`Thank you for subscribing! You'll receive updates to ${email}\nFrom: samuwaeducanewscampany@hotmail.com`);
+        document.getElementById("subscriberEmail").value = "";
+      } else {
+        alert("Please enter your email address.");
+      }
+    }
+  </script>
+ </body>
+  </html>
