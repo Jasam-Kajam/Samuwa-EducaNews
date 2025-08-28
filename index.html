@@ -238,7 +238,7 @@
       const featured = allPosts[0];
       if (featured){
         document.getElementById("featuredStory").innerHTML = `
-          <a href="post.html?id=${featured.id}">
+          <a href="posts/categories?id=${featured.id}">
             <img src="${extractFirstImage(featured.article)}" alt="${featured.title}" loading="lazy">
             <div class="overlay">${featured.title}</div>
           </a>
@@ -267,7 +267,7 @@
           const card = document.createElement("div");
           card.className = "post-card";
           card.innerHTML = `
-            <a href="post.html?id=${post.id}">
+            <a href="posts/categories?id=${post.id}">
               <img src="${imgSrc}" alt="${post.title}" loading="lazy">
             </a>
             <div class="content">
