@@ -2,22 +2,115 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Loading Post...</title>
+  <title>View Post</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Loading article..." />
+
+  <!-- Basic SEO meta -->
+  <meta name="description" content="Read educational articles, news and resources from Samuwa EducaNews. Stay updated with fresh insights.">
+  <meta name="author" content="Samuwa EducaNews">
+
   <style>
-    body { font-family: Arial, sans-serif; max-width: 800px; margin: auto; padding: 20px; background-color: #f5f5f5; color: #333; }
-    h1#postTitle { font-size: 2.6em; font-weight: bold; color: #0d47a1; border-bottom: 4px solid #0d47a1; padding-bottom: 10px; margin-bottom: 5px; }
-    .post-category { display: inline-block; background-color: #ff6f00; color: white; font-size: 0.95em; font-weight: bold; padding: 6px 12px; border-radius: 20px; margin-top: 10px; margin-bottom: 5px; }
-    .post-meta { font-size: 0.9em; color: #555; margin-bottom: 15px; }
-    #coverImage { width: 100%; max-height: 400px; object-fit: cover; margin: 10px 0 20px 0; border-radius: 8px; display: none; }
-    iframe, img, video { max-width: 100%; height: auto; margin-top: 15px; border-radius: 6px; }
-    #postContent img { max-width: 48%; height: auto; border-radius: 6px; margin: 0 0 1rem 0; }
-    #postContent img:nth-of-type(odd) { float: left; margin: 0 1rem 1rem 0; }
-    #postContent img:nth-of-type(even) { float: right; margin: 0 0 1rem 1rem; }
-    #postContent::after { content: ""; display: table; clear: both; }
+    html, body {
+      height: 100%;
+      margin: 0;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      background-color: #f5f5f5;
+      color: #333;
+    }
+    main {
+      flex: 1;
+      max-width: 800px;
+      margin: auto;
+      padding: 20px;
+      width: 100%;
+    }
+    h1#postTitle {
+      font-size: 2.6em;
+      font-weight: bold;
+      color: #0d47a1;
+      border-bottom: 4px solid #0d47a1;
+      padding-bottom: 10px;
+      margin-bottom: 5px;
+    }
+    .post-category {
+      display: inline-block;
+      background-color: #ff6f00;
+      color: white;
+      font-size: 0.95em;
+      font-weight: bold;
+      padding: 6px 12px;
+      border-radius: 20px;
+      margin-top: 10px;
+      margin-bottom: 5px;
+    }
+    .post-meta {
+      font-size: 0.9em;
+      color: #555;
+      margin-bottom: 15px;
+    }
+    #coverImage {
+      width: 100%;
+      max-height: 400px;
+      object-fit: cover;
+      margin: 10px 0 20px 0;
+      border-radius: 8px;
+      display: none;
+    }
+    iframe, img, video {
+      max-width: 100%;
+      height: auto;
+      margin-top: 15px;
+      border-radius: 6px;
+    }
+    #postContent img {
+      max-width: 48%;
+      height: auto;
+      border-radius: 6px;
+      margin: 0 0 1rem 0;
+    }
+    #postContent img:nth-of-type(odd) {
+      float: left;
+      margin: 0 1rem 1rem 0;
+    }
+    #postContent img:nth-of-type(even) {
+      float: right;
+      margin: 0 0 1rem 1rem;
+    }
+    #postContent::after {
+      content: "";
+      display: table;
+      clear: both;
+    }
     @media (max-width: 600px) {
-      #postContent img { max-width: 100%; float: none; display: block; margin: 1rem auto; }
+      #postContent img {
+        max-width: 100%;
+        float: none;
+        display: block;
+        margin: 1rem auto;
+      }
+    }
+
+    footer {
+      background-color: #0d47a1;
+      color: white;
+      padding: 40px 20px;
+      font-family: Arial, sans-serif;
+    }
+    footer nav ul {
+      list-style: none;
+      padding: 0;
+    }
+    footer nav ul li {
+      margin-bottom: 5px;
+    }
+    footer nav ul li a {
+      color: white;
+      text-decoration: none;
+    }
+    footer nav ul li a:hover {
+      text-decoration: underline;
     }
   </style>
 
@@ -26,29 +119,33 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 </head>
 <body>
-  <h1 id="postTitle">Loading...</h1>
-  <div class="post-category" id="postCategory"></div>
-  <div class="post-meta" id="postMeta"></div>
-  <img id="coverImage" alt="Cover Image" />
-  <div id="postContent"></div>
+  <main>
+    <h1 id="postTitle">Loading...</h1>
+    <div class="post-category" id="postCategory"></div>
+    <div class="post-meta" id="postMeta"></div>
 
-  <!-- 🔽 Your Footer added here -->
-  <footer style="background-color: #0d47a1; color: white; padding: 40px 20px; font-family: Arial, sans-serif; margin-top: 60px;">
+    <img id="coverImage" alt="Cover Image" />
+
+    <div id="postContent"></div>
+  </main>
+
+  <!-- SEO + Navigation-friendly Footer -->
+  <footer>
     <div style="display: flex; flex-wrap: wrap; justify-content: space-between; max-width: 1200px; margin: auto;">
       <div style="flex: 1; min-width: 200px;">
-        <h3 style="font-family: 'Times New Roman', serif;">Samuwa EducaNews</h3>
+        <h3>Samuwa EducaNews</h3>
         <p>Empowering students, teachers, and readers with quality educational content and news updates.</p>
       </div>
-      <div style="flex: 1; min-width: 200px;">
+      <nav style="flex: 1; min-width: 200px;" aria-label="Footer navigation">
         <h4>Quick Links</h4>
-        <ul style="list-style: none; padding: 0;">
-          <li><a href="index.html" style="color: white; text-decoration: none;">Home</a></li>
-          <li><a href="article.html" style="color: white; text-decoration: none;">Latest Articles</a></li>
-          <li><a href="#" style="color: white; text-decoration: none;">Categories</a></li>
-          <li><a href="about.html" style="color: white; text-decoration: none;">About Us</a></li>
-          <li><a href="contac.html" style="color: white; text-decoration: none;">Contact</a></li>
+        <ul>
+          <li><a href="index.html">Home</a></li>
+          <li><a href="article.html">Latest Articles</a></li>
+          <li><a href="#">Categories</a></li>
+          <li><a href="about.html">About Us</a></li>
+          <li><a href="contact.html">Contact</a></li>
         </ul>
-      </div>
+      </nav>
       <div style="flex: 1; min-width: 200px;">
         <h4>Newsletter</h4>
         <p>Stay updated! Get the latest posts delivered to your inbox.</p>
@@ -69,18 +166,6 @@
   </footer>
 
   <script>
-    // Newsletter subscription alert
-    function subscribe() {
-      const email = document.getElementById("subscriberEmail").value.trim();
-      if (email) {
-        alert(`Thank you for subscribing! You'll receive updates to ${email}\nFrom: samuwaeducanewscampany@hotmail.com`);
-        document.getElementById("subscriberEmail").value = "";
-      } else {
-        alert("Please enter your email address.");
-      }
-    }
-
-    // Firebase setup
     const firebaseConfig = {
       apiKey: "AIzaSyAwAxP-MWwNnKP59PA6joil4Ceq10eozlc",
       authDomain: "wafula-s-educational-posts.firebaseapp.com",
@@ -96,49 +181,123 @@
     const urlParams = new URLSearchParams(window.location.search);
     const postId = urlParams.get("id");
 
+    function formatViews(num) {
+      if (num >= 1_000_000) return (num / 1_000_000).toFixed(1) + "M";
+      if (num >= 1_000) return (num / 1_000).toFixed(1) + "K";
+      return num;
+    }
+
+    function getCreateDate(snapshot) {
+      try {
+        const data = snapshot.data();
+        if (data) {
+          const ts = data.timestamp || data.uploadedAt || data.createdAt || data.date;
+          if (ts) {
+            if (typeof ts.toDate === 'function') return ts.toDate();
+            if (typeof ts === 'number') return new Date(ts);
+            const parsed = Date.parse(ts);
+            if (!isNaN(parsed)) return new Date(parsed);
+          }
+        }
+      } catch(e){}
+      try {
+        if (snapshot.createTime && typeof snapshot.createTime.toDate === 'function') {
+          return snapshot.createTime.toDate();
+        }
+      } catch(e){}
+      return null;
+    }
+
+    const authors = [
+      "John Wafula","Mary Atieno","Peter Kimani","Grace Naliaka","Samuel W.",
+      "Emily Chebet","Brian Otieno","Sarah Njeri","David Mwangi","Lucy Achieng"
+    ];
+
+    function getAuthorForPost(postId) {
+      let hash = 0;
+      for (let i = 0; i < postId.length; i++) {
+        hash = (hash << 5) - hash + postId.charCodeAt(i);
+        hash |= 0;
+      }
+      const index = Math.abs(hash) % authors.length;
+      return authors[index];
+    }
+
     if (!postId) {
       document.getElementById("postTitle").textContent = "No post ID provided.";
-      document.title = "Post Not Found";
     } else {
       const postRef = db.collection("posts").doc(postId);
+      const viewsRef = db.collection("views").doc(postId);
+
       postRef.get().then(snapshot => {
         if (!snapshot.exists) {
           document.getElementById("postTitle").textContent = "Post not found.";
-          document.title = "Post Not Found";
           return;
         }
-
         const post = snapshot.data();
 
-        // Update title in <h1> and <title>
+        // Update <title> dynamically for SEO
+        document.title = post.title ? post.title + " | Samuwa EducaNews" : "Samuwa EducaNews";
+
         document.getElementById("postTitle").textContent = post.title || "Untitled";
-        document.title = post.title || "Untitled";
-
-        // Update meta description
-        const metaDesc = document.querySelector("meta[name='description']");
-        if (metaDesc) {
-          const rawText = (post.article || "").replace(/<[^>]+>/g, ""); // strip HTML
-          metaDesc.setAttribute("content", rawText.substring(0, 150) + "...");
-        }
-
-        // Set category
         document.getElementById("postCategory").textContent = post.category || "Uncategorized";
 
-        // Display cover image
+        const author = getAuthorForPost(postId);
+        const createDateObj = getCreateDate(snapshot);
+        const date = createDateObj
+          ? createDateObj.toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric' })
+          : "Unknown Date";
+
+        viewsRef.set({ count: firebase.firestore.FieldValue.increment(1) }, { merge: true })
+          .then(() => viewsRef.get())
+          .then(viewDoc => {
+            const views = viewDoc.exists ? viewDoc.data().count || 1 : 1;
+            document.getElementById("postMeta").textContent =
+              `By ${author} • ${date} • 👁️ ${formatViews(views)}`;
+          });
+
+        let html = post.article || "";
+        const parser = new DOMParser();
+        const docHTML = parser.parseFromString(html, "text/html");
+        const firstImg = docHTML.querySelector("img");
+
         if (post.cover) {
           const coverImage = document.getElementById("coverImage");
           coverImage.src = post.cover;
           coverImage.style.display = "block";
+          if (firstImg) firstImg.remove();
+          html = docHTML.body.innerHTML;
+        } else if (firstImg) {
+          const coverImage = document.getElementById("coverImage");
+          coverImage.src = firstImg.src;
+          coverImage.style.display = "block";
+          firstImg.remove();
+          html = docHTML.body.innerHTML;
         }
 
-        // Render article content
-        document.getElementById("postContent").innerHTML = post.article || "";
-      }).catch(err => {
+        document.getElementById("postContent").innerHTML = html;
+      }).catch(error => {
         document.getElementById("postTitle").textContent = "Error loading post.";
-        document.title = "Error";
-        console.error(err);
+        console.error(error);
       });
     }
+
+    function subscribe() {
+      const email = document.getElementById("subscriberEmail").value.trim();
+      if (email) {
+        alert(`Thank you for subscribing! You'll receive updates to ${email}\nFrom: samuwaeducanewscampany@hotmail.com`);
+        document.getElementById("subscriberEmail").value = "";
+      } else {
+        alert("Please enter your email address.");
+      }
+    }
   </script>
+<script>
+  // Disable right click context menu
+  document.addEventListener("contextmenu", function(e) {
+    e.preventDefault();
+    alert("Right click is disabled on this site.");
+  });
+</script>
 </body>
 </html>
