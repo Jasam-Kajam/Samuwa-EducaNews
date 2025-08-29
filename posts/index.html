@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>  
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Samuwa EducaNews – Learn, Read & Explore</title>
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+
+  <!-- Basic SEO -->
+  <meta name="description" content="Samuwa EducaNews offers educational articles, notes, past papers, videos, and more for Kenyan learners and beyond.">
+  <meta name="keywords" content="education, Kenya, news, KCSE, KCPE, past papers, notes, study, Samuwa">
+  <meta name="author" content="Samuwa EducaNews">
+  <meta name="robots" content="index, follow">
+
+  <!-- Social -->
+  <meta property="og:title" content="Samuwa EducaNews – Learn, Read & Explore">
+  <meta property="og:description" content="Free and premium educational content: notes, videos, articles, and more.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://samuwa-educanews.onrender.com/logo.png" />
+  <meta name="twitter:card" content="summary_large_image">
+
+  <style>
+    :root{
+      --primary:#007bff;
+      --accent1:#00796b;
+      --accent2:#6a1b9a;
+      --accent3:#f57c00;
+      --accent4:#1976d2;
+      --accent5:#c2185b;
+      --accent6:#2e7d32;
+      --bg:#f4f6f9;
+      --text:#222;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;font-family:'Roboto',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden}
+
+    /* Header */
+    header{
+      position:sticky;top:0;z-index:50;
+      background:var(--primary);color:#fff;
+      padding:10px 20px;display:flex;align-items:center;justify-content:space-between
+    }
+    .logo{display:flex;align-items:center;font-family:'Times New Roman',serif;font-size:24px;font-weight:bold}
+    .logo img{height:40px;width:auto;margin-right:10px;border-radius:6px}
+    .hamburger{font-size:28px;cursor:pointer}
+    .menu{display:none;background:#0056b3;padding:10px}
+    .menu a{display:block;color:#fff;text-decoration:none;margin-bottom:8px}
+    .menu a:hover{text-decoration:underline}
+
+    /* Ticker */
+    .ticker{background:var(--accent5);color:#fff;padding:8px 16px;overflow:hidden;white-space:nowrap}
+    .ticker span{display:inline-block;padding-left:100%;animation:scroll 18s linear infinite}
+    .ticker:hover span{animation-play-state:paused}
+    .ticker a{color:#fff;text-decoration:none;margin-right:28px}
+    .ticker a:hover{text-decoration:underline}
+    @keyframes scroll{0%{transform:translateX(0)}100%{transform:translateX(-100%)}}
+
+    /* Featured */
+    .featured{position:relative;max-width:1100px;margin:20px auto;border-radius:12px;overflow:hidden;height:420px;background:#ddd}
+    .featured img{width:100%;height:100%;object-fit:cover;display:block}
+    .featured .overlay{
+      position:absolute;left:0;right:0;bottom:0;
+      background:linear-gradient(transparent,rgba(0,0,0,.8));
+      color:#fff;padding:18px;font-size:24px;font-weight:700
+    }
+
+    /* Categories */
+    .container{max-width:1100px;margin:0 auto;padding:0 20px}
+    .category-title{font-size:22px;font-weight:700;color:#fff;padding:10px;border-radius:8px;margin:34px 0 12px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
+    .post-card{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,.08);display:flex;flex-direction:column}
+    .post-card img{width:100%;height:180px;object-fit:cover;display:block}
+    .post-card .content{padding:12px;flex:1}
+    .post-card .title{font-weight:700;margin-bottom:6px}
+    .post-card .excerpt{opacity:.85}
+
+    /* Load more */
+    .load-more{display:block;margin:30px auto 50px;padding:12px 22px;background:var(--primary);color:#fff;border:0;border-radius:8px;cursor:pointer}
+
+    /* Footer (full original) */
+    footer{background-color:#0d47a1;color:#fff;padding:40px 20px;font-family:Arial,sans-serif;margin-top:40px}
+    footer a{color:#fff;text-decoration:none}
+    footer hr{border-color:rgba(255,255,255,.2);margin:20px 0}
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="logo">
+      <img src="https://res.cloudinary.com/dkoagpcul/image/upload/v1753858825/file_000000008bd461f489ab78e732435eba_tiqllb.png" alt="Samuwa Logo">
+      Samuwa EducaNews
+    </div>
+    <div class="hamburger" onclick="toggleMenu()" role="button" aria-controls="categoryMenu" aria-expanded="false" tabindex="0"
+         onkeydown="if(event.key==='Enter'||event.key===' ') toggleMenu()">&#9776;</div>
+  </header>
+
+  <!-- Hamburger menu -->
+  <div class="menu" id="categoryMenu">
+    <a href="#news">News</a>
+    <a href="#sports">Sports</a>
+    <a href="#blogs">Blogs</a>
+    <a href="#business">Business</a>
+    <a href="#courses">Courses</a>
+    <a href="#funny">Funny</a>
+    <a href="#inspire me">Inspire Me</a>
+    <a href="posts/das">Donate</a>
+  </div>
+
+  <!-- Ticker -->
+  <div class="ticker" id="newsTicker"><span>Loading latest news…</span></div>
+
+  <!-- Featured -->
+  <div class="featured" id="featuredStory"></div>
+
+  <!-- Categories -->
+  <div class="container" id="contentArea"></div>
+
+  <!-- Load More (all categories) -->
+  <button class="load-more" id="loadMoreBtn">Load More</button>
+
+  <!-- FULL original footer restored -->
+  <footer>
+    <div style="display:flex; flex-wrap: wrap; justify-content: space-between; max-width: 1200px; margin: auto;">
+      <div style="flex: 1; min-width: 200px;">
+        <h3 style="font-family: 'Times New Roman', serif;">Samuwa EducaNews</h3>
+        <p>Empowering students, teachers, and readers with quality educational content and news updates.</p>
+      </div>
+      <div style="flex: 1; min-width: 200px;">
+        <h4>Quick Links</h4>
+        <ul style="list-style: none; padding: 0;">
+          <li><a href="#">Home</a></li>
+          <li><a href="article.html">Latest Articles</a></li>
+          <li><a href="#">Categories</a></li>
+          <li><a href="about.html">About Us</a></li>
+          <li><a href="contac.html">Contact</a></li>
+        </ul>
+      </div>
+      <div style="flex: 1; min-width: 200px;">
+        <h4>Newsletter</h4>
+        <p>Stay updated! Get the latest posts delivered to your inbox.</p>
+        <input id="subscriberEmail" type="email" placeholder="Your email" style="padding: 8px; width: 100%; border: none; border-radius: 4px; margin-bottom: 10px;" />
+        <button onclick="subscribe()" style="padding: 10px; width: 100%; background-color: #2196f3; color: white; border: none; border-radius: 4px;">Subscribe</button>
+      </div>
+      <div style="flex: 1; min-width: 200px;">
+        <h4>Follow Us</h4>
+        <p>
+          <a href="https://www.facebook.com/profile.php?id=61578932424898" style="color: white; margin-right: 10px;">Facebook</a>
+          <a href="#" style="color: white; margin-right: 10px;">Twitter</a>
+          <a href="#" style="color: white;">YouTube</a>
+        </p>
+      </div>
+    </div>
+    <hr />
+    <div id="footerYear" style="text-align: center; font-size: 14px;">&copy; Samuwa EducaNews. All rights reserved.</div>
+  </footer>
+
+  <!-- App Script -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, collection, getDocs, query, orderBy, limit, startAfter } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-lite.js";
+
+    // Insert current year into footer
+    document.getElementById("footerYear").innerHTML = "&copy; " + new Date().getFullYear() + " Samuwa EducaNews. All rights reserved.";
+
+    // Toggle menu
+    window.toggleMenu = function () {
+      const menu = document.getElementById("categoryMenu");
+      const open = menu.style.display === "block";
+      menu.style.display = open ? "none" : "block";
+      const btn = document.querySelector(".hamburger");
+      if (btn) btn.setAttribute("aria-expanded", String(!open));
+    };
+
+    // Subscribe mock
+    window.subscribe = function() {
+      const email = document.getElementById("subscriberEmail").value.trim();
+      if (email) {
+        alert("Thank you for subscribing! You'll receive updates to " + email + "\\nFrom: samuwaeducanewscampany@hotmail.com");
+        document.getElementById("subscriberEmail").value = "";
+      } else { alert("Please enter your email address."); }
+    };
+
+    // Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyAwAxP-MWwNnKP59PA6joil4Ceq10eozlc",
+      authDomain: "wafula-s-educational-posts.firebaseapp.com",
+      projectId: "wafula-s-educational-posts"
+    };
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // State
+    let lastVisible = null;
+    let allPosts = [];
+    const categories = ["news","sports","business","courses","funny","inspire me","blogs"];
+    const colors = ["#00796b","#6a1b9a","#f57c00","#1976d2","#c2185b","#2e7d32","#009688"];
+    const visibleByCat = Object.fromEntries(categories.map(c => [c, 4]));
+
+    // Utils
+    function extractFirstImage(html){
+      let src = "https://via.placeholder.com/800x400?text=Samuwa+EducaNews";
+      if (!html) return src;
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, "text/html");
+      const img = doc.querySelector("img");
+      if (img && img.getAttribute("src")) src = img.getAttribute("src");
+      return src;
+    }
+    function stripHTML(s){ return s ? s.replace(/<[^>]*>?/gm,"") : ""; }
+
+    // Fetch posts
+    async function fetchPosts(initial=true){
+      const qRef = lastVisible
+        ? query(collection(db,"posts"), orderBy("timestamp","desc"), startAfter(lastVisible), limit(30))
+        : query(collection(db,"posts"), orderBy("timestamp","desc"), limit(30));
+
+      const snap = await getDocs(qRef);
+      if (snap.empty) { if (initial) renderContent(); return; }
+
+      lastVisible = snap.docs[snap.docs.length-1];
+      const batch = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+      allPosts = allPosts.concat(batch);
+
+      renderContent(initial);
+    }
+
+    // Render
+    function renderContent(initial){
+      const ticker = document.getElementById("newsTicker");
+      const top5 = allPosts.slice(0,5);
+      if (top5.length){
+        ticker.innerHTML = "<span>" + top5.map(p => `<a href="post.html?id=${p.id}">${p.title}</a>`).join("&nbsp;|&nbsp;") + "</span>";
+      }
+
+      const featured = allPosts[0];
+      if (featured){
+        document.getElementById("featuredStory").innerHTML = `
+          <a href="posts/categories?id=${featured.id}">
+            <img src="${extractFirstImage(featured.article)}" alt="${featured.title}" loading="lazy">
+            <div class="overlay">${featured.title}</div>
+          </a>
+        `;
+      }
+
+      const contentArea = document.getElementById("contentArea");
+      contentArea.innerHTML = "";
+      categories.forEach((cat, i) => {
+        const section = document.createElement("section");
+        const title = document.createElement("div");
+        title.className = "category-title";
+        title.style.backgroundColor = colors[i % colors.length];
+        title.textContent = cat.charAt(0).toUpperCase() + cat.slice(1);
+        section.appendChild(title);
+
+        const grid = document.createElement("div");
+        grid.className = "grid";
+
+        const postsForCat = allPosts.filter(p => (p.category||"").toLowerCase() === cat);
+        const showCount = visibleByCat[cat] || 4;
+
+        postsForCat.slice(0, showCount).forEach(post => {
+          const imgSrc = extractFirstImage(post.article);
+          const excerpt = stripHTML(post.article).split(/\s+/).slice(0,20).join(" ");
+          const card = document.createElement("div");
+          card.className = "post-card";
+          card.innerHTML = `
+            <a href="posts/categories?id=${post.id}">
+              <img src="${imgSrc}" alt="${post.title}" loading="lazy">
+            </a>
+            <div class="content">
+              <div class="title">${post.title}</div>
+              <div class="excerpt">${excerpt}...</div>
+            </div>
+          `;
+          grid.appendChild(card);
+        });
+
+        section.appendChild(grid);
+        contentArea.appendChild(section);
+      });
+
+      document.getElementById("loadMoreBtn").style.display = "block";
+    }
+
+    async function loadMoreAll(){
+      categories.forEach(c => visibleByCat[c] = (visibleByCat[c] || 4) + 4);
+      await fetchPosts(false);
+      renderContent(false);
+    }
+    document.getElementById("loadMoreBtn").addEventListener("click", loadMoreAll);
+
+    // Initial
+    fetchPosts(true);
+  </script>
+
+  <!-- Disable right click (no alert) -->
+  <script>
+    document.addEventListener("contextmenu", event => event.preventDefault());
+  </script>
+</body>
+contac
