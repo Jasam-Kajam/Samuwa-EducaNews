@@ -90,7 +90,7 @@
         const postId = doc.id;
 
         const li = document.createElement("li");
-        li.innerHTML = `<a href="post.html?id=${postId}">${title}</a>`;
+        li.innerHTML = `<a href="categories?id=${postTitle}">${title}</a>`;
         latestList.appendChild(li);
       });
     }
