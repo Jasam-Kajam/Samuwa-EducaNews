@@ -285,10 +285,19 @@
       document.getElementById("loadMoreBtn").style.display = "block";
     }
 
-    async function loadMoreAll(){
-      categories.forEach(c => visibleByCat[c] = (visibleByCat[c] || 4) + 4);
-      await fetchPosts(false);
-      renderContent(false);
+    async function loadMoreInspire(){
+  const cat = "inspire me";   // Only this category
+  visibleByCat[cat] = (visibleByCat[cat] || 4) + 4;
+  await fetchPosts(false);
+  renderContent(false);
+
+  // Hide button if no more Inspire Me posts left
+  const inspirePosts = allPosts.filter(p => (p.category||"").toLowerCase() === cat);
+  if (visibleByCat[cat] >= inspirePosts.length) {
+    document.getElementById("loadMoreBtn").style.display = "none";
+  }
+}
+document.getElementById("loadMoreBtn").addEventListener("click", loadMoreInspire);
     }
     document.getElementById("loadMoreBtn").addEventListener("click", loadMoreAll);
 
