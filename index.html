@@ -79,7 +79,7 @@
     /* Load more */
     .load-more{display:block;margin:30px auto 50px;padding:12px 22px;background:var(--primary);color:#fff;border:0;border-radius:8px;cursor:pointer}
 
-    /* Footer (full original) */
+    /* Footer */
     footer{background-color:#0d47a1;color:#fff;padding:40px 20px;font-family:Arial,sans-serif;margin-top:40px}
     footer a{color:#fff;text-decoration:none}
     footer hr{border-color:rgba(255,255,255,.2);margin:20px 0}
@@ -118,10 +118,10 @@
   <!-- Categories -->
   <div class="container" id="contentArea"></div>
 
-  <!-- Load More (all categories) -->
-  <button class="load-more" id="loadMoreBtn">Load More</button>
+  <!-- Load More -->
+  <button class="load-more" id="loadMoreBtn">More Inspire Me</button>
 
-  <!-- FULL original footer restored -->
+  <!-- Footer -->
   <footer>
     <div style="display:flex; flex-wrap: wrap; justify-content: space-between; max-width: 1200px; margin: auto;">
       <div style="flex: 1; min-width: 200px;">
@@ -197,7 +197,6 @@
     let allPosts = [];
     const categories = ["news","sports","business","courses","funny","inspire me","blogs"];
     const colors = ["#00796b","#6a1b9a","#f57c00","#1976d2","#c2185b","#2e7d32","#009688"];
-    const visibleByCat = Object.fromEntries(categories.map(c => [c, 4]));
 
     // Utils
     function extractFirstImage(html){
@@ -259,9 +258,8 @@
         grid.className = "grid";
 
         const postsForCat = allPosts.filter(p => (p.category||"").toLowerCase() === cat);
-        const showCount = visibleByCat[cat] || 4;
 
-        postsForCat.slice(0, showCount).forEach(post => {
+        postsForCat.slice(0, 4).forEach(post => {
           const imgSrc = extractFirstImage(post.article);
           const excerpt = stripHTML(post.article).split(/\s+/).slice(0,20).join(" ");
           const card = document.createElement("div");
@@ -281,33 +279,20 @@
         section.appendChild(grid);
         contentArea.appendChild(section);
       });
-
-      document.getElementById("loadMoreBtn").style.display = "block";
     }
 
-    async function loadMoreInspire(){
-  const cat = "inspire me";   // Only this category
-  visibleByCat[cat] = (visibleByCat[cat] || 4) + 4;
-  await fetchPosts(false);
-  renderContent(false);
-
-  // Hide button if no more Inspire Me posts left
-  const inspirePosts = allPosts.filter(p => (p.category||"").toLowerCase() === cat);
-  if (visibleByCat[cat] >= inspirePosts.length) {
-    document.getElementById("loadMoreBtn").style.display = "none";
-  }
-}
-document.getElementById("loadMoreBtn").addEventListener("click", loadMoreInspire);
-    }
-    document.getElementById("loadMoreBtn").addEventListener("click", loadMoreAll);
+    // Load More button → redirects to Inspire Me page
+    document.getElementById("loadMoreBtn").addEventListener("click", () => {
+      window.location.href = "posts/inspire%20me";
+    });
 
     // Initial
     fetchPosts(true);
   </script>
 
-  <!-- Disable right click (no alert) -->
+  <!-- Disable right click -->
   <script>
     document.addEventListener("contextmenu", event => event.preventDefault());
   </script>
 </body>
-contac
+</html>
